@@ -53,6 +53,11 @@ public class HttpCookieRealm extends AbstractRealm {
             getSessionRepository().removeSession(storedSession.getPrincipal(), storedSession.getId());
             storedSession = null;
         }
+        if (storedSession != null && !storedSession.getOrigin().equals(loginContext.getOrigin())) {
+            LOGGER.finest("authenticate() Removing stolen session " + sessionId + ": session origin=" + storedSession.getOrigin() + " vs request origin=" + loginContext.getOrigin());
+            getSessionRepository().removeSession(storedSession.getPrincipal(), storedSession.getId());
+            storedSession = null;
+        }
         if (storedSession == null) {
             throw new CredentialExpiredException(sessionId);
         }

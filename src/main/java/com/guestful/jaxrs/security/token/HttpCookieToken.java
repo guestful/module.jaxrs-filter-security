@@ -52,4 +52,7 @@ public class HttpCookieToken extends AbstractAuthenticationToken {
         return false;
     }
 
+    public Cookie getCookie() {
+        return cookie;
+    }
 }
