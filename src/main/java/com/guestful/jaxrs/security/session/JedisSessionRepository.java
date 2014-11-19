@@ -48,13 +48,25 @@ public class JedisSessionRepository implements SessionRepository {
     public void saveSession(StoredSession storedSession) {
         LOGGER.finest(storedSession.getPrincipal() + "  Saving session " + storedSession.getId());
         Jedis jedis = null;
+        boolean jedisFailure = false;
         try {
             jedis = jedisPool.getResource();
-            jedis.setex(key(storedSession.getId()), storedSession.getTTL(), encode(storedSession));
+            byte[] key = key(storedSession.getId());
+            byte[] data = encode(storedSession);
+            try {
+                jedis.setex(key, storedSession.getTTL(), data);
+            } catch (Exception je) {
+                jedisFailure = true;
+                throw je;
+            }
         } catch (InterruptedException | TimeoutException e) {
             throw new SessionRepositoryException("Unable to save session " + storedSession.getId() + ": " + e.getMessage(), e);
         } finally {
-            jedisPool.returnResource(jedis);
+            if (jedisFailure) {
+                jedisPool.returnBrokenResource(jedis);
+            } else {
+                jedisPool.returnResource(jedis);
+            }
         }
     }
 
@@ -62,32 +74,58 @@ public class JedisSessionRepository implements SessionRepository {
     public void removeSession(Principal principal, String id) {
         LOGGER.finest(principal + " Removing session " + id);
         Jedis jedis = null;
+        boolean jedisFailure = false;
         try {
             jedis = jedisPool.getResource();
-            jedis.del(key(id));
+            byte[] key = key(id);
+            try {
+                jedis.del(key);
+            } catch (Exception je) {
+                jedisFailure = true;
+                throw je;
+            }
         } finally {
-            jedisPool.returnResource(jedis);
+            if (jedisFailure) {
+                jedisPool.returnBrokenResource(jedis);
+            } else {
+                jedisPool.returnResource(jedis);
+            }
         }
     }
 
     @Override
     public StoredSession findSession(String id) {
         Jedis jedis = null;
+        boolean jedisfailure = false;
         try {
             jedis = jedisPool.getResource();
             byte[] k = key(id);
-            byte[] bytes = jedis.get(k);
+            byte[] bytes;
+            try {
+                bytes = jedis.get(k);
+            } catch (Exception je) {
+                jedisfailure = true;
+                throw je;
+            }
             try {
                 return (StoredSession) decode(bytes);
             } catch (InterruptedException | TimeoutException e) {
                 throw new SessionRepositoryException("Unable to save session " + id + ": " + e.getMessage(), e);
             } catch (Exception e) {
                 LOGGER.log(Level.WARNING, "Removing malformed session " + id + ": " + e.getMessage(), e);
-                jedis.del(k);
+                try {
+                    jedis.del(k);
+                } catch (Exception je) {
+                    jedisfailure = true;
+                }
                 return null;
             }
         } finally {
-            jedisPool.returnResource(jedis);
+            if (jedisfailure) {
+                jedisPool.returnBrokenResource(jedis);
+            } else {
+                jedisPool.returnResource(jedis);
+            }
         }
     }
 
