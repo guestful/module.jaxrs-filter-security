@@ -21,7 +21,6 @@ import javax.ws.rs.core.UriInfo;
 
 /**
  * @author Mathieu Carbou (mathieu.carbou@gmail.com)
- * @date 2014-11-18
  */
 public class CookieAuth {
 

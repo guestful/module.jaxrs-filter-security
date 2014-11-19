@@ -24,7 +24,6 @@ import java.util.Map;
 
 /**
  * @author Mathieu Carbou (mathieu.carbou@gmail.com)
- * s@date 2014-05-27
  */
 public class StoredSession implements Session, Serializable {
 
