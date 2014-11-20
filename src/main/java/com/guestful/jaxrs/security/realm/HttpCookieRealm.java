@@ -49,12 +49,12 @@ public class HttpCookieRealm extends AbstractRealm {
         }
         StoredSession storedSession = getSessionRepository().findSession(sessionId);
         if (storedSession != null && storedSession.isExpired()) {
-            LOGGER.finest("authenticate() Removing expired session " + sessionId);
+            LOGGER.info("authenticate() Removing expired session " + sessionId);
             getSessionRepository().removeSession(storedSession.getPrincipal(), storedSession.getId());
             storedSession = null;
         }
         if (storedSession != null && !storedSession.getOrigin().equals(loginContext.getOrigin())) {
-            LOGGER.finest("authenticate() Removing stolen session " + sessionId + ": session origin=" + storedSession.getOrigin() + " vs request origin=" + loginContext.getOrigin());
+            LOGGER.info("authenticate() Removing stolen session " + sessionId + ": session origin=" + storedSession.getOrigin() + " vs request origin=" + loginContext.getOrigin());
             getSessionRepository().removeSession(storedSession.getPrincipal(), storedSession.getId());
             storedSession = null;
         }
