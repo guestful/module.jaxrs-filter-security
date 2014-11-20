@@ -26,6 +26,16 @@ public class SessionConfiguration {
     private String cookieName;
     private String cookiePath;
     private String cookieDomain;
+    private boolean checkOrigin;
+
+    public boolean isCheckOrigin() {
+        return checkOrigin;
+    }
+
+    public SessionConfiguration setCheckOrigin(boolean checkOrigin) {
+        this.checkOrigin = checkOrigin;
+        return this;
+    }
 
     public int getMaxAge() {
         return maxAge;
