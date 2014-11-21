@@ -25,14 +25,16 @@ import javax.ws.rs.core.UriInfo;
 public class CookieAuth {
 
     private final UriInfo uriInfo;
+    private String realm;
 
     public CookieAuth(UriInfo uriInfo) {
         this.uriInfo = uriInfo;
     }
 
     public void replace(String value) {
-
+        remember(realm, value);
     }
+
     public void remember(String realm, String value) {
 
     }
@@ -41,7 +43,7 @@ public class CookieAuth {
         //new NewCookie(cookie, null, 0, EXPIRED, false, true)
     }
 
-    public String getValue() {
+    public String getPrincipal() {
         return null;
     }
 
