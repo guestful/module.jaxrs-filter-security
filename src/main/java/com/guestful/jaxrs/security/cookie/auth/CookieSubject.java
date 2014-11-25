@@ -15,8 +15,6 @@
  */
 package com.guestful.jaxrs.security.cookie.auth;
 
-import com.guestful.jaxrs.security.AuthenticationException;
-
 import javax.ws.rs.core.UriInfo;
 import java.security.Principal;
 
@@ -31,20 +29,12 @@ public class CookieSubject {
         this.uriInfo = uriInfo;
     }
 
-    public void replace(String value) {
-        login(realm, value);
-    }
-
     public void login(Principal principal) {
 
     }
 
     public Principal getPrincipal() {
         return null;
-    }
-
-    public AuthenticationException failed(String message) {
-        return new AuthenticationException(message, uriInfo);
     }
 
     public void logout() {
