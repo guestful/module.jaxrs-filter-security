@@ -15,39 +15,16 @@
  */
 package com.guestful.jaxrs.security.cookie.auth;
 
-import com.guestful.jaxrs.security.AuthenticationException;
-
-import javax.ws.rs.core.UriInfo;
+import java.lang.annotation.*;
 
 /**
  * @author Mathieu Carbou (mathieu.carbou@gmail.com)
  */
-public class CookieAuth {
+@Target({ElementType.PARAMETER, ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface CookieAuth {
+    String realm();
 
-    private final UriInfo uriInfo;
-    private String realm;
-
-    public CookieAuth(UriInfo uriInfo) {
-        this.uriInfo = uriInfo;
-    }
-
-    public void replace(String value) {
-        remember(realm, value);
-    }
-
-    public void remember(String realm, String value) {
-
-    }
-
-    public void clear() {
-        //new NewCookie(cookie, null, 0, EXPIRED, false, true)
-    }
-
-    public String getPrincipal() {
-        return null;
-    }
-
-    public AuthenticationException failed(String message) {
-        return new AuthenticationException(message, uriInfo);
-    }
+    boolean optional() default false;
 }
