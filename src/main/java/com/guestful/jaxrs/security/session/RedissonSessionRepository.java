@@ -18,7 +18,6 @@ package com.guestful.jaxrs.security.session;
 import org.redisson.Redisson;
 import org.redisson.core.RBucket;
 
-import java.security.Principal;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -43,18 +42,18 @@ public class RedissonSessionRepository implements SessionRepository {
     }
 
     @Override
-    public void removeSession(Principal principal, String id) {
-        LOGGER.finest(principal + " Removing session " + id);
-        redisson.getBucket(PREFIX + id).delete();
+    public void removeSession(String sessionId) {
+        LOGGER.finest("removeSession() " + sessionId);
+        redisson.getBucket(PREFIX + sessionId).delete();
     }
 
     @Override
-    public StoredSession findSession(String id) {
-        RBucket<StoredSession> bucket = redisson.<StoredSession>getBucket(PREFIX + id);
+    public StoredSession findSession(String sessionId) {
+        RBucket<StoredSession> bucket = redisson.<StoredSession>getBucket(PREFIX + sessionId);
         try {
             return bucket.get();
         } catch (RuntimeException e) {
-            LOGGER.log(Level.WARNING, "Removing malformed session " + id + ": " + e.getMessage(), e);
+            LOGGER.log(Level.WARNING, "Removing malformed session " + sessionId + ": " + e.getMessage(), e);
             bucket.delete();
             return null;
         }

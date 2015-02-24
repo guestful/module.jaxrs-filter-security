@@ -16,6 +16,7 @@
 package com.guestful.jaxrs.security.subject;
 
 import com.guestful.jaxrs.security.LoginContext;
+import com.guestful.jaxrs.security.session.ConnectedSession;
 import com.guestful.jaxrs.security.token.AuthenticationToken;
 
 import javax.ws.rs.container.ContainerRequestContext;
@@ -112,4 +113,9 @@ public interface Subject extends LoginContext {
     default void accessed() {
         SubjectContext.accessed(this);
     }
+
+    default Collection<ConnectedSession> getConnectedSessions() {
+        return SubjectContext.getConnectedSessions(this);
+    }
+
 }

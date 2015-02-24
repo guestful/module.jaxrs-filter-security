@@ -16,9 +16,12 @@
 package com.guestful.jaxrs.security.subject;
 
 import com.guestful.jaxrs.security.SecurityService;
+import com.guestful.jaxrs.security.session.ConnectedSession;
 import com.guestful.jaxrs.security.token.AuthenticationToken;
 
 import javax.security.auth.login.LoginException;
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * date 2014-05-23
@@ -44,6 +47,13 @@ public class SubjectContext {
         if (getSubject(false) == subject) {
             clearCurrentSubject();
         }
+    }
+
+    static Collection<ConnectedSession> getConnectedSessions(Subject subject) {
+        if (subject.getPrincipal() != null && subject.getSession(false) != null && subject.getAuthenticationToken() != null) {
+            return getSecurityService().getConnectedSessions(subject.getPrincipal());
+        }
+        return Collections.emptyList();
     }
 
     public static void setSecurityService(SecurityService securityService) {
@@ -90,4 +100,5 @@ public class SubjectContext {
         if (subject == null) throw new NullPointerException();
         getSecurityService().accessed(subject);
     }
+
 }

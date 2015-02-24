@@ -15,10 +15,13 @@
  */
 package com.guestful.jaxrs.security;
 
+import com.guestful.jaxrs.security.session.ConnectedSession;
 import com.guestful.jaxrs.security.subject.Subject;
 import com.guestful.jaxrs.security.token.AuthenticationToken;
 
 import javax.security.auth.login.LoginException;
+import java.security.Principal;
+import java.util.Collection;
 
 /**
  * date 2014-05-23
@@ -27,6 +30,10 @@ import javax.security.auth.login.LoginException;
  */
 public interface SecurityService {
     void accessed(Subject subject);
+
     Subject login(AuthenticationToken token, LoginContext loginContext) throws LoginException;
+
     void logout(Subject subject);
+
+    Collection<ConnectedSession> getConnectedSessions(Principal principal);
 }

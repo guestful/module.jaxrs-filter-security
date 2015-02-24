@@ -19,9 +19,11 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Singleton;
 import java.security.Principal;
+import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * @author Mathieu Carbou (mathieu.carbou@gmail.com)
@@ -76,14 +78,19 @@ public class MemorySessionRepository implements SessionRepository {
     }
 
     @Override
-    public void removeSession(Principal principal, String id) {
-        LOGGER.finest(principal + " Removing session " + id);
-        sessions.remove(id);
+    public void removeSession(String sessionId) {
+        LOGGER.finest("removeSession() " + sessionId);
+        sessions.remove(sessionId);
     }
 
     @Override
-    public StoredSession findSession(String id) {
-        return sessions.get(id);
+    public StoredSession findSession(String sessionId) {
+        return sessions.get(sessionId);
+    }
+
+    @Override
+    public Collection<StoredSession> findConnectedSessions(Principal principal) {
+        return sessions.values().stream().filter(st -> principal.equals(st.getPrincipal())).collect(Collectors.toList());
     }
 
 }

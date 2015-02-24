@@ -53,7 +53,7 @@ public class LoginPasswordRealm extends AbstractRealm {
         }
         if (account.getPrincipal().equals(loginContext.getPrincipal()) && loginContext.getSession(false) != null) {
             LOGGER.finest("logout() removing old session " + loginContext.getSession().getId());
-            getSessionRepository().removeSession(loginContext.getPrincipal(), loginContext.getSession().getId());
+            getSessionRepository().removeSession(loginContext.getSession().getId());
         }
         return new DefaultSubject(
             account,

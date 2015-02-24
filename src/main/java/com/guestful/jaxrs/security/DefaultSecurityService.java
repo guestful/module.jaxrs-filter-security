@@ -17,9 +17,7 @@ package com.guestful.jaxrs.security;
 
 import com.guestful.jaxrs.security.realm.Realm;
 import com.guestful.jaxrs.security.realm.UnsupportedTokenException;
-import com.guestful.jaxrs.security.session.Session;
-import com.guestful.jaxrs.security.session.SessionRepository;
-import com.guestful.jaxrs.security.session.StoredSession;
+import com.guestful.jaxrs.security.session.*;
 import com.guestful.jaxrs.security.subject.Subject;
 import com.guestful.jaxrs.security.subject.SubjectContext;
 import com.guestful.jaxrs.security.token.AuthenticationToken;
@@ -28,7 +26,10 @@ import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.security.auth.login.LoginException;
+import java.security.Principal;
+import java.util.Collection;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * date 2014-05-26
@@ -79,10 +80,21 @@ public class DefaultSecurityService implements SecurityService {
                 realm.onLogout(subject);
             }
             if (subject.getAuthenticationToken().isSessionAllowed()) {
-                LOGGER.finest("logout() removing session " + subject.getSession().getId());
-                sessionRepository.removeSession(subject.getPrincipal(), subject.getSession().getId());
+                Session session = subject.getSession();
+                LOGGER.finest("invalidate() session " + session.getId());
+                sessionRepository.removeSession(session.getId());
             }
         }
+    }
+
+    @Override
+    public Collection<ConnectedSession> getConnectedSessions(Principal principal) {
+        return sessionRepository.findConnectedSessions(principal).stream().map(stored -> new DefaultConnectedSession(stored) {
+            @Override
+            public void invalidate() {
+                sessionRepository.removeSession(getId());
+            }
+        }).collect(Collectors.toList());
     }
 
 }

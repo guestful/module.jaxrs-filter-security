@@ -25,6 +25,7 @@ import java.util.Map;
  * @author Mathieu Carbou (mathieu.carbou@gmail.com)
  */
 public interface LoginContext {
+
     Session getSession(boolean create);
 
     Principal getPrincipal();

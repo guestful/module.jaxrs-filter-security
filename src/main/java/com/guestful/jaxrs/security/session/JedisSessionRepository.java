@@ -25,6 +25,10 @@ import redis.clients.jedis.JedisPool;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -71,13 +75,13 @@ public class JedisSessionRepository implements SessionRepository {
     }
 
     @Override
-    public void removeSession(Principal principal, String id) {
-        LOGGER.finest(principal + " Removing session " + id);
+    public void removeSession(String sessionId) {
+        LOGGER.finest("removeSession() " + sessionId);
         Jedis jedis = null;
         boolean jedisFailure = false;
         try {
             jedis = jedisPool.getResource();
-            byte[] key = key(id);
+            byte[] key = key(sessionId);
             try {
                 jedis.del(key);
             } catch (Exception je) {
@@ -94,12 +98,12 @@ public class JedisSessionRepository implements SessionRepository {
     }
 
     @Override
-    public StoredSession findSession(String id) {
+    public StoredSession findSession(String sessionId) {
         Jedis jedis = null;
         boolean jedisfailure = false;
         try {
             jedis = jedisPool.getResource();
-            byte[] k = key(id);
+            byte[] k = key(sessionId);
             byte[] bytes;
             try {
                 bytes = jedis.get(k);
@@ -110,9 +114,9 @@ public class JedisSessionRepository implements SessionRepository {
             try {
                 return (StoredSession) decode(bytes);
             } catch (InterruptedException | TimeoutException e) {
-                throw new SessionRepositoryException("Unable to save session " + id + ": " + e.getMessage(), e);
+                throw new SessionRepositoryException("Unable to save session " + sessionId + ": " + e.getMessage(), e);
             } catch (Exception e) {
-                LOGGER.log(Level.WARNING, "Removing malformed session " + id + ": " + e.getMessage(), e);
+                LOGGER.log(Level.WARNING, "Removing malformed session " + sessionId + ": " + e.getMessage(), e);
                 try {
                     jedis.del(k);
                 } catch (Exception je) {
@@ -127,6 +131,47 @@ public class JedisSessionRepository implements SessionRepository {
                 jedisPool.returnResource(jedis);
             }
         }
+    }
+
+    @Override
+    public Collection<StoredSession> findConnectedSessions(Principal principal) {
+        Jedis jedis = null;
+        boolean jedisfailure = false;
+        Collection<StoredSession> storedSessions = new ArrayList<>();
+        try {
+            jedis = jedisPool.getResource();
+            List<byte[]> vals;
+            byte[][] keys;
+            try {
+                Set<byte[]> keySet = jedis.keys(key("*"));
+                keys = keySet.toArray(new byte[0][]);
+                vals = jedis.mget(keys);
+            } catch (Exception je) {
+                jedisfailure = true;
+                throw je;
+            }
+            for (int i = 0; i < keys.length; i++) {
+                byte[] key = keys[i];
+                byte[] bytes = vals.get(i);
+                try {
+                    storedSessions.add((StoredSession) decode(bytes));
+                } catch (Exception e) {
+                    LOGGER.log(Level.WARNING, "Removing malformed session " + new String(key) + ": " + e.getMessage(), e);
+                    try {
+                        jedis.del(key);
+                    } catch (Exception je) {
+                        jedisfailure = true;
+                    }
+                }
+            }
+        } finally {
+            if (jedisfailure) {
+                jedisPool.returnBrokenResource(jedis);
+            } else {
+                jedisPool.returnResource(jedis);
+            }
+        }
+        return storedSessions;
     }
 
     private Object decode(byte[] bytes) throws TimeoutException, InterruptedException {
