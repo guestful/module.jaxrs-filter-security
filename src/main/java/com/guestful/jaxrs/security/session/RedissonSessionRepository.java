@@ -18,9 +18,11 @@ package com.guestful.jaxrs.security.session;
 import org.redisson.Redisson;
 import org.redisson.core.RBucket;
 
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * @author Mathieu Carbou (mathieu.carbou@gmail.com)
@@ -57,6 +59,11 @@ public class RedissonSessionRepository implements SessionRepository {
             bucket.delete();
             return null;
         }
+    }
+
+    @Override
+    public Collection<StoredSession> findSessions() {
+        return redisson.<StoredSession>getBuckets(PREFIX + "*").stream().map(RBucket::get).collect(Collectors.toList());
     }
 
 }

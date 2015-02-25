@@ -18,12 +18,10 @@ package com.guestful.jaxrs.security.session;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Singleton;
-import java.security.Principal;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 /**
  * @author Mathieu Carbou (mathieu.carbou@gmail.com)
@@ -89,8 +87,8 @@ public class MemorySessionRepository implements SessionRepository {
     }
 
     @Override
-    public Collection<StoredSession> findConnectedSessions(Principal principal) {
-        return sessions.values().stream().filter(st -> principal.equals(st.getPrincipal())).collect(Collectors.toList());
+    public Collection<StoredSession> findSessions() {
+        return sessions.values();
     }
 
 }

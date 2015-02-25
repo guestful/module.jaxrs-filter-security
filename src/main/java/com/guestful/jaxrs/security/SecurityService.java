@@ -35,5 +35,7 @@ public interface SecurityService {
 
     void logout(Subject subject);
 
+    Collection<ConnectedSession> getConnectedSessions();
+
     Collection<ConnectedSession> getConnectedSessions(Principal principal);
 }

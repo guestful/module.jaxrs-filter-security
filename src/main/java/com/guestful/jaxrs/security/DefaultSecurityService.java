@@ -88,13 +88,30 @@ public class DefaultSecurityService implements SecurityService {
     }
 
     @Override
+    public Collection<ConnectedSession> getConnectedSessions() {
+        return sessionRepository.findSessions()
+            .stream()
+            .map(stored -> new DefaultConnectedSession(stored) {
+                @Override
+                public void invalidate() {
+                    sessionRepository.removeSession(getId());
+                }
+            })
+            .collect(Collectors.toList());
+    }
+
+    @Override
     public Collection<ConnectedSession> getConnectedSessions(Principal principal) {
-        return sessionRepository.findConnectedSessions(principal).stream().map(stored -> new DefaultConnectedSession(stored) {
-            @Override
-            public void invalidate() {
-                sessionRepository.removeSession(getId());
-            }
-        }).collect(Collectors.toList());
+        return sessionRepository.findSessions()
+            .stream()
+            .filter(stored -> principal.equals(stored.getPrincipal()))
+            .map(stored -> new DefaultConnectedSession(stored) {
+                @Override
+                public void invalidate() {
+                    sessionRepository.removeSession(getId());
+                }
+            })
+            .collect(Collectors.toList());
     }
 
 }

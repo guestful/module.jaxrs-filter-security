@@ -16,6 +16,8 @@
 package com.guestful.jaxrs.security.util;
 
 import com.esotericsoftware.kryo.Kryo;
+import com.guestful.jaxrs.security.realm.StringPrincipal;
+import com.guestful.jaxrs.security.session.RedissonSessionRepository;
 import com.guestful.jaxrs.security.session.StoredSession;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -25,10 +27,12 @@ import org.redisson.Redisson;
 import org.redisson.codec.KryoCodec;
 import org.redisson.core.RBucket;
 
+import java.util.Collection;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 /**
  * @author Mathieu Carbou (mathieu.carbou@gmail.com)
@@ -41,36 +45,58 @@ public final class RedissonSessionRepositoryTest {
         KryoCodec.KryoPool kryoPool = new KryoCodec.KryoPoolImpl() {
             @Override
             protected Kryo createInstance() {
-                Kryo kryo = new Kryo();
-                return kryo;
+                return new Kryo();
             }
         };
         Config config = new Config();
         config.setCodec(new KryoCodec(kryoPool));
 
         // using local connection, it works:
-        //config.useSingleConnection().setAddress("127.0.0.1:6379");
+        config.useSingleServer().setAddress("127.0.0.1:6379");
 
         // but using a redis server on redislabs.com does not work:
-        config.useSingleServer()
-            .setAddress("pub-redis-19585.us-east-1-4.3.ec2.garantiadata.com:19585")
-            .setPassword("test");
+        /*config.useSingleServer()
+            .setAddress(System.getenv("REDIS_ADDRESS"))
+            .setPassword(System.getenv("REDIS_AUTH"));*/
 
         Redisson redisson = Redisson.create(config);
 
-        StoredSession storedSession = new StoredSession();
-        String uuid = UUID.randomUUID().toString();
-        storedSession.setId(uuid);
-        storedSession.setMaxAge(20);
-        storedSession.setCreationTime(System.currentTimeMillis());
-        storedSession.setLastAccessTime(storedSession.getCreationTime());
+        StoredSession storedSession1 = new StoredSession();
+        String uuid1 = UUID.randomUUID().toString();
+        storedSession1.setPrincipal(new StringPrincipal(uuid1));
+        storedSession1.setId(uuid1);
+        storedSession1.setMaxAge(20);
+        storedSession1.setCreationTime(System.currentTimeMillis());
+        storedSession1.setLastAccessTime(storedSession1.getCreationTime());
 
-        redisson.getBucket(uuid).set(storedSession, storedSession.getTTL(), TimeUnit.SECONDS);
+        redisson.getBucket(uuid1).set(storedSession1, storedSession1.getTTL(), TimeUnit.SECONDS);
 
-        RBucket<StoredSession> bucket = redisson.<StoredSession>getBucket(uuid);
-        storedSession = bucket.get();
+        RBucket<StoredSession> bucket = redisson.<StoredSession>getBucket(uuid1);
+        storedSession1 = bucket.get();
 
-        assertNotNull(storedSession);
+        assertNotNull(storedSession1);
+
+        StoredSession storedSession2 = new StoredSession();
+        String uuid2 = UUID.randomUUID().toString();
+        storedSession2.setPrincipal(new StringPrincipal(uuid2));
+        storedSession2.setId(uuid2);
+        storedSession2.setMaxAge(20);
+        storedSession2.setCreationTime(System.currentTimeMillis());
+        storedSession2.setLastAccessTime(storedSession1.getCreationTime());
+
+        RedissonSessionRepository sessionRepository = new RedissonSessionRepository(redisson);
+        sessionRepository.saveSession(storedSession1);
+        sessionRepository.saveSession(storedSession2);
+
+        assertEquals(storedSession1.getPrincipal(), sessionRepository.findSession(storedSession1.getId()).getPrincipal());
+
+        Collection<String> sessions = sessionRepository.findSessions()
+            .stream()
+            .map(st -> st.getPrincipal().getName())
+            .collect(Collectors.toList());
+        assertEquals(2, sessions.size());
+        assertTrue(sessions.contains(uuid1));
+        assertTrue(sessions.contains(uuid2));
     }
 
 }

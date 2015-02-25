@@ -15,7 +15,6 @@
  */
 package com.guestful.jaxrs.security.session;
 
-import java.security.Principal;
 import java.util.Collection;
 
 /**
@@ -28,5 +27,5 @@ public interface SessionRepository {
 
     StoredSession findSession(String sessionId);
 
-    Collection<StoredSession> findConnectedSessions(Principal principal);
+    Collection<StoredSession> findSessions();
 }

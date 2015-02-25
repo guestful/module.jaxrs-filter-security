@@ -24,7 +24,6 @@ import redis.clients.jedis.JedisPool;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
-import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -134,7 +133,7 @@ public class JedisSessionRepository implements SessionRepository {
     }
 
     @Override
-    public Collection<StoredSession> findConnectedSessions(Principal principal) {
+    public Collection<StoredSession> findSessions() {
         Jedis jedis = null;
         boolean jedisfailure = false;
         Collection<StoredSession> storedSessions = new ArrayList<>();
