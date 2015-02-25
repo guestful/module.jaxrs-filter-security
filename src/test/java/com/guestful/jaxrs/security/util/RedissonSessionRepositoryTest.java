@@ -30,6 +30,7 @@ import org.redisson.Redisson;
 import org.redisson.codec.KryoCodec;
 import org.redisson.core.RBucket;
 import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.JedisPoolConfig;
 
 import java.util.Collection;
 import java.util.UUID;
@@ -56,12 +57,12 @@ public final class RedissonSessionRepositoryTest {
         config.setCodec(new KryoCodec(kryoPool));
 
         // using local connection, it works:
-        config.useSingleServer().setAddress("127.0.0.1:6379");
+        //config.useSingleServer().setAddress("127.0.0.1:6379");
 
         // but using a redis server on redislabs.com does not work:
-        /*config.useSingleServer()
+        config.useSingleServer()
             .setAddress(System.getenv("REDIS_ADDRESS"))
-            .setPassword(System.getenv("REDIS_AUTH"));*/
+            .setPassword(System.getenv("REDIS_AUTH"));
 
         Redisson redisson = Redisson.create(config);
 
@@ -90,7 +91,9 @@ public final class RedissonSessionRepositoryTest {
 
 
         ObjectPool<Kryo> objectPool = new BoundedObjectPool<>(5, 60, 30000, Kryo::new);
-        SessionRepository sessionRepository = new JedisSessionRepository(new JedisPool("127.0.0.1", 6379), objectPool);
+        String[] addr = System.getenv("REDIS_ADDRESS").split(":");
+        SessionRepository sessionRepository = new JedisSessionRepository(new JedisPool(new JedisPoolConfig(), addr[0], Integer.parseInt(addr[1]), 20000, System.getenv("REDIS_AUTH")), objectPool);
+        //SessionRepository sessionRepository = new JedisSessionRepository(new JedisPool("127.0.0.1", 6379), objectPool);
         //SessionRepository sessionRepository = new RedissonSessionRepository(redisson);
         sessionRepository.saveSession(storedSession1);
         sessionRepository.saveSession(storedSession2);
