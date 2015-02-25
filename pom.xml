@@ -28,7 +28,7 @@
 
     <groupId>com.guestful.module</groupId>
     <artifactId>guestful.module.jaxrs-filter-security</artifactId>
-    <version>1.8-SNAPSHOT</version>
+    <version>1.7-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>Guestful :: Module :: JAX-RS Security Filters (JSR-250, Http Basic, Cookie, Remember-Me, etc)</name>
     <inceptionYear>2013</inceptionYear>
