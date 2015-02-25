@@ -21,7 +21,6 @@ import com.guestful.jaxrs.security.session.JedisSessionRepository;
 import com.guestful.jaxrs.security.session.SessionRepository;
 import com.guestful.jaxrs.security.session.StoredSession;
 import com.guestful.simplepool.BoundedObjectPool;
-import com.guestful.simplepool.ObjectPool;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -46,24 +45,16 @@ public final class RedissonSessionRepositoryTest {
 
     @Test
     public void test() throws Exception {
-        KryoCodec.KryoPool kryoPool = new KryoCodec.KryoPoolImpl() {
-            @Override
-            protected Kryo createInstance() {
-                return new Kryo();
-            }
-        };
-        Config config = new Config();
-        config.setCodec(new KryoCodec(kryoPool));
+        // jedis
+        JedisPool jedisPool = new JedisPool("127.0.0.1", 6379);
 
-        // using local connection, it works:
+        // redisson
+        Config config = new Config().setCodec(new KryoCodec());
         config.useSingleServer().setAddress("127.0.0.1:6379");
-
-        // but using a redis server on redislabs.com does not work:
-        /*config.useSingleServer()
-            .setAddress(System.getenv("REDIS_ADDRESS"))
-            .setPassword(System.getenv("REDIS_AUTH"));*/
-
         Redisson redisson = Redisson.create(config);
+
+        // flush db
+        jedisPool.getResource().flushDB();
 
         StoredSession storedSession1 = new StoredSession();
         String uuid1 = UUID.randomUUID().toString();
@@ -73,13 +64,6 @@ public final class RedissonSessionRepositoryTest {
         storedSession1.setCreationTime(System.currentTimeMillis());
         storedSession1.setLastAccessTime(storedSession1.getCreationTime());
 
-        redisson.getBucket(uuid1).set(storedSession1, storedSession1.getTTL(), TimeUnit.SECONDS);
-
-        RBucket<StoredSession> bucket = redisson.<StoredSession>getBucket(uuid1);
-        storedSession1 = bucket.get();
-
-        assertNotNull(storedSession1);
-
         StoredSession storedSession2 = new StoredSession();
         String uuid2 = UUID.randomUUID().toString();
         storedSession2.setPrincipal(new StringPrincipal(uuid2));
@@ -88,11 +72,12 @@ public final class RedissonSessionRepositoryTest {
         storedSession2.setCreationTime(System.currentTimeMillis());
         storedSession2.setLastAccessTime(storedSession1.getCreationTime());
 
+        redisson.getBucket(uuid1).set(storedSession1, storedSession1.getTTL(), TimeUnit.SECONDS);
+        RBucket<StoredSession> bucket = redisson.<StoredSession>getBucket(uuid1);
+        storedSession1 = bucket.get();
+        assertNotNull(storedSession1);
 
-        ObjectPool<Kryo> objectPool = new BoundedObjectPool<>(5, 60, 30000, Kryo::new);
-        //String[] addr = System.getenv("REDIS_ADDRESS").split(":");
-        //SessionRepository sessionRepository = new JedisSessionRepository(new JedisPool(new JedisPoolConfig(), addr[0], Integer.parseInt(addr[1]), 20000, System.getenv("REDIS_AUTH")), objectPool);
-        SessionRepository sessionRepository = new JedisSessionRepository(new JedisPool("127.0.0.1", 6379), objectPool);
+        SessionRepository sessionRepository = new JedisSessionRepository(jedisPool, new BoundedObjectPool<>(5, 60, 30000, Kryo::new));
         //SessionRepository sessionRepository = new RedissonSessionRepository(redisson);
         sessionRepository.saveSession(storedSession1);
         sessionRepository.saveSession(storedSession2);

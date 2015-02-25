@@ -15,105 +15,13 @@
  */
 package com.guestful.jaxrs.security.session;
 
-import com.guestful.jaxrs.security.util.Crypto;
-
-import java.util.Collections;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 /**
  * date 2014-05-26
  *
  * @author Mathieu Carbou (mathieu.carbou@gmail.com)
  */
-public abstract class DefaultConnectedSession implements ConnectedSession {
-
-    private final String id;
-    private final String origin;
-    private final int maxAge;
-    private final boolean isNew;
-    private final long creationTime;
-    private final long lastAccessTime;
-    private final Map<String, Object> attributes = new ConcurrentHashMap<>();
-
-    public DefaultConnectedSession() {
-        this(-1, null);
-    }
-
-    public DefaultConnectedSession(int maxAge, String origin) {
-        this.id = Crypto.uuid();
-        this.creationTime = System.currentTimeMillis();
-        this.maxAge = maxAge;
-        this.origin = origin;
-        this.lastAccessTime = this.creationTime;
-        this.isNew = true;
-    }
-
+public abstract class DefaultConnectedSession extends DefaultSession implements ConnectedSession {
     public DefaultConnectedSession(StoredSession storedSession) {
-        this.id = storedSession.getId();
-        this.creationTime = storedSession.getCreationTime();
-        this.maxAge = storedSession.getMaxAge();
-        this.origin = storedSession.getOrigin();
-        this.attributes.putAll(storedSession.getAttributes());
-        this.lastAccessTime = storedSession.getLastAccessTime();
-        this.isNew = false;
+        super(storedSession);
     }
-
-    @Override
-    public boolean isNew() {
-        return isNew;
-    }
-
-    @Override
-    public String getId() {
-        return id;
-    }
-
-    @Override
-    public String getOrigin() {
-        return origin;
-    }
-
-    @Override
-    public int getMaxAge() {
-        return maxAge;
-    }
-
-    @Override
-    public long getCreationTime() {
-        return creationTime;
-    }
-
-    @Override
-    public long getLastAccessTime() {
-        return lastAccessTime;
-    }
-
-    @Override
-    public void setAttribute(String key, Object value) {
-        attributes.put(key, value);
-    }
-
-    @Override
-    public Object getAttribute(String key, Object value) {
-        return attributes.get(key);
-    }
-
-    @Override
-    public Map<String, Object> getAttributes() {
-        return Collections.unmodifiableMap(attributes);
-    }
-
-    @Override
-    public String toString() {
-        return "{" +
-            "id='" + id + '\'' +
-            ", origin='" + origin + '\'' +
-            ", creationTime=" + creationTime +
-            ", maxAge=" + maxAge +
-            ", isNew=" + isNew +
-            ", lastAccessTime=" + lastAccessTime +
-            '}';
-    }
-
 }

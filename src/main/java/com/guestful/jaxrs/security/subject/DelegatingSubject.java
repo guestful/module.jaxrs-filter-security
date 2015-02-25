@@ -21,6 +21,7 @@ import com.guestful.jaxrs.security.token.AuthenticationToken;
 import com.guestful.jaxrs.security.token.DelegatingAuthenticationToken;
 
 import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.SecurityContext;
 import java.security.Principal;
 import java.util.Collection;
@@ -101,6 +102,11 @@ public class DelegatingSubject implements Subject {
     @Override
     public String getOrigin() {
         return request.getHeaderString("X-Forwarded-For");
+    }
+
+    @Override
+    public String getUserAgent() {
+        return request.getHeaderString(HttpHeaders.USER_AGENT);
     }
 
     @Override

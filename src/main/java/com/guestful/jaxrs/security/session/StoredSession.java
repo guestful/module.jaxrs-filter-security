@@ -25,7 +25,7 @@ import java.util.Map;
 /**
  * @author Mathieu Carbou (mathieu.carbou@gmail.com)
  */
-public class StoredSession implements Session, Serializable {
+public class StoredSession implements Serializable, Expirable {
 
     private static final long serialVersionUID = 3078945930695997491L;
 
@@ -33,6 +33,9 @@ public class StoredSession implements Session, Serializable {
     private Principal principal;
     private String id;
     private String origin;
+    private String lastOrigin;
+    private String userAgent;
+    private String lastUserAgent;
     private int maxAge;
     private long creationTime;
     private long lastAccessTime;
@@ -52,19 +55,12 @@ public class StoredSession implements Session, Serializable {
         setId(session.getId());
         setMaxAge(session.getMaxAge());
         setOrigin(session.getOrigin());
+        setUserAgent(session.getUserAgent());
         setPrincipal(subject.getPrincipal());
 
         setLastAccessTime(System.currentTimeMillis());
-    }
-
-    @Override
-    public String getId() {
-        return id;
-    }
-
-    @Override
-    public String getOrigin() {
-        return origin;
+        setLastOrigin(subject.getOrigin());
+        setLastUserAgent(subject.getUserAgent());
     }
 
     @Override
@@ -73,36 +69,62 @@ public class StoredSession implements Session, Serializable {
     }
 
     @Override
-    public long getCreationTime() {
-        return creationTime;
-    }
-
-    @Override
     public long getLastAccessTime() {
         return lastAccessTime;
     }
 
-    @Override
+    public String getLastOrigin() {
+        return lastOrigin;
+    }
+
+    public void setLastOrigin(String lastOrigin) {
+        this.lastOrigin = lastOrigin;
+    }
+
+    public String getLastUserAgent() {
+        return lastUserAgent;
+    }
+
+    public void setLastUserAgent(String lastUserAgent) {
+        this.lastUserAgent = lastUserAgent;
+    }
+
+    public String getUserAgent() {
+        return userAgent;
+    }
+
+    public void setUserAgent(String userAgent) {
+        this.userAgent = userAgent;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public String getOrigin() {
+        return origin;
+    }
+
+    public long getCreationTime() {
+        return creationTime;
+    }
+
     public String toString() {
         return getId();
     }
 
-    @Override
     public void setAttribute(String key, Object value) {
         attributes.put(key, value);
     }
 
-    @Override
     public Object getAttribute(String key, Object value) {
         return attributes.get(key);
     }
 
-    @Override
     public Map<String, Object> getAttributes() {
         return attributes;
     }
 
-    @Override
     public boolean isNew() {
         return isNew;
     }
@@ -146,4 +168,5 @@ public class StoredSession implements Session, Serializable {
     public static StoredSession accessed(Subject subject) {
         return new StoredSession(subject);
     }
+
 }

@@ -22,16 +22,18 @@ import java.util.Map;
  *
  * @author Mathieu Carbou (mathieu.carbou@gmail.com)
  */
-public interface Session {
+public interface Session extends Expirable {
     String getId();
 
     String getOrigin();
 
-    int getMaxAge();
+    String getLastOrigin();
+
+    String getUserAgent();
+
+    String getLastUserAgent();
 
     long getCreationTime();
-
-    long getLastAccessTime();
 
     void setAttribute(String key, Object value);
 
@@ -40,17 +42,4 @@ public interface Session {
     Map<String, Object> getAttributes();
 
     boolean isNew();
-
-    default boolean isExpired() {
-        return getTTL() == 0;
-    }
-
-    default int getTTL() {
-        return Math.max(0, getMaxAge() - getLastAccessAge());
-    }
-
-    default int getLastAccessAge() {
-        return Math.toIntExact((System.currentTimeMillis() - getLastAccessTime()) / 1000);
-    }
-
 }

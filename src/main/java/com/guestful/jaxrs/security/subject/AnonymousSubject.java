@@ -88,6 +88,11 @@ class AnonymousSubject implements Subject {
     }
 
     @Override
+    public String getUserAgent() {
+        return null;
+    }
+
+    @Override
     public String toString() {
         return "<anonymous>";
     }

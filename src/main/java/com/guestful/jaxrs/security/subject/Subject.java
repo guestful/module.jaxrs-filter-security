@@ -22,7 +22,6 @@ import com.guestful.jaxrs.security.token.AuthenticationToken;
 import javax.ws.rs.container.ContainerRequestContext;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Map;
 import java.util.concurrent.Callable;
 
 /**
@@ -43,10 +42,6 @@ public interface Subject extends LoginContext {
     void setAttribute(String name, Object value);
 
     Object getAttribute(String name);
-
-    Map<String, Object> getAttributes();
-
-    String getOrigin();
 
     default boolean isRemembered() {
         return getPrincipal() != null && getAuthenticationToken() != null && !isAuthenticated();

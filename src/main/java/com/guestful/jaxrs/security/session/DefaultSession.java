@@ -15,6 +15,7 @@
  */
 package com.guestful.jaxrs.security.session;
 
+import com.guestful.jaxrs.security.subject.Subject;
 import com.guestful.jaxrs.security.util.Crypto;
 
 import java.util.Collections;
@@ -30,6 +31,9 @@ public class DefaultSession implements Session {
 
     private final String id;
     private final String origin;
+    private final String lastOrigin;
+    private final String userAgent;
+    private final String lastUserAgent;
     private final int maxAge;
     private final boolean isNew;
     private final long creationTime;
@@ -37,16 +41,19 @@ public class DefaultSession implements Session {
     private final Map<String, Object> attributes = new ConcurrentHashMap<>();
 
     public DefaultSession() {
-        this(-1, null);
+        this(null, -1);
     }
 
-    public DefaultSession(int maxAge, String origin) {
+    public DefaultSession(Subject subject, int maxAge) {
         this.id = Crypto.uuid();
         this.creationTime = System.currentTimeMillis();
         this.maxAge = maxAge;
-        this.origin = origin;
-        this.lastAccessTime = this.creationTime;
         this.isNew = true;
+        this.origin = subject == null ? null : subject.getOrigin();
+        this.userAgent = subject == null ? null : subject.getUserAgent();
+        this.lastAccessTime = this.creationTime;
+        this.lastOrigin = this.origin;
+        this.lastUserAgent = this.userAgent;
     }
 
     public DefaultSession(StoredSession storedSession) {
@@ -54,9 +61,27 @@ public class DefaultSession implements Session {
         this.creationTime = storedSession.getCreationTime();
         this.maxAge = storedSession.getMaxAge();
         this.origin = storedSession.getOrigin();
+        this.userAgent = storedSession.getUserAgent();
         this.attributes.putAll(storedSession.getAttributes());
         this.lastAccessTime = storedSession.getLastAccessTime();
+        this.lastOrigin = storedSession.getLastOrigin();
+        this.lastUserAgent = storedSession.getLastUserAgent();
         this.isNew = false;
+    }
+
+    @Override
+    public String getLastOrigin() {
+        return lastOrigin;
+    }
+
+    @Override
+    public String getLastUserAgent() {
+        return lastUserAgent;
+    }
+
+    @Override
+    public String getUserAgent() {
+        return userAgent;
     }
 
     @Override

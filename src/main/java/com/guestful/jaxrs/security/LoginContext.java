@@ -34,6 +34,8 @@ public interface LoginContext {
 
     String getOrigin();
 
+    String getUserAgent();
+
     Map<String, Object> getAttributes();
 
     default Session getSession() {

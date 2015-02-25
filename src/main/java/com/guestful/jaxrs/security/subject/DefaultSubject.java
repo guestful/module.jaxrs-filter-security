@@ -36,13 +36,13 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class DefaultSubject implements Subject {
 
-
     private final Account account;
     private Session session;
     private final AuthenticationToken authenticationToken;
     private final SessionConfiguration sessionConfiguration;
     private final Map<String, Object> attributes = new ConcurrentHashMap<>();
     private final String origin;
+    private final String userAgent;
     private final ContainerRequestContext request;
 
     public DefaultSubject(Account account,
@@ -57,6 +57,7 @@ public class DefaultSubject implements Subject {
         this.request = loginContext.getRequest();
         this.attributes.putAll(loginContext.getAttributes());
         this.origin = loginContext.getOrigin();
+        this.userAgent = loginContext.getUserAgent();
     }
 
     @Override
@@ -67,7 +68,7 @@ public class DefaultSubject implements Subject {
     @Override
     public Session getSession(boolean create) {
         if (session == null && create) {
-            session = new DefaultSession(sessionConfiguration.getMaxAge(), getOrigin());
+            session = new DefaultSession(this, sessionConfiguration.getMaxAge());
         }
         return session;
     }
@@ -112,4 +113,8 @@ public class DefaultSubject implements Subject {
         return origin;
     }
 
+    @Override
+    public String getUserAgent() {
+        return userAgent;
+    }
 }
