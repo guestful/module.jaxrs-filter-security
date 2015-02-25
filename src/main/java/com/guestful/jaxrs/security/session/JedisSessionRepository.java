@@ -143,7 +143,7 @@ public class JedisSessionRepository implements SessionRepository {
             byte[][] keys;
             try {
                 Set<byte[]> keySet = jedis.keys(key("*"));
-                keys = keySet.toArray(new byte[0][]);
+                keys = keySet.toArray(new byte[keySet.size()][]);
                 vals = jedis.mget(keys);
             } catch (Exception je) {
                 jedisfailure = true;
