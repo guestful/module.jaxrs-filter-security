@@ -17,8 +17,11 @@ package com.guestful.jaxrs.security.util;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.guestful.jaxrs.security.realm.StringPrincipal;
-import com.guestful.jaxrs.security.session.RedissonSessionRepository;
+import com.guestful.jaxrs.security.session.JedisSessionRepository;
+import com.guestful.jaxrs.security.session.SessionRepository;
 import com.guestful.jaxrs.security.session.StoredSession;
+import com.guestful.simplepool.BoundedObjectPool;
+import com.guestful.simplepool.ObjectPool;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -26,6 +29,7 @@ import org.redisson.Config;
 import org.redisson.Redisson;
 import org.redisson.codec.KryoCodec;
 import org.redisson.core.RBucket;
+import redis.clients.jedis.JedisPool;
 
 import java.util.Collection;
 import java.util.UUID;
@@ -84,7 +88,10 @@ public final class RedissonSessionRepositoryTest {
         storedSession2.setCreationTime(System.currentTimeMillis());
         storedSession2.setLastAccessTime(storedSession1.getCreationTime());
 
-        RedissonSessionRepository sessionRepository = new RedissonSessionRepository(redisson);
+
+        ObjectPool<Kryo> objectPool = new BoundedObjectPool<>(5, 60, 30000, Kryo::new);
+        SessionRepository sessionRepository = new JedisSessionRepository(new JedisPool("127.0.0.1", 6379), objectPool);
+        //SessionRepository sessionRepository = new RedissonSessionRepository(redisson);
         sessionRepository.saveSession(storedSession1);
         sessionRepository.saveSession(storedSession2);
 
