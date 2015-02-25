@@ -89,8 +89,16 @@ public class DefaultSecurityService implements SecurityService {
 
     @Override
     public Collection<ConnectedSession> getConnectedSessions() {
+        LOGGER.finest("getConnectedSessions()");
         return sessionRepository.findSessions()
             .stream()
+            .filter(stored -> {
+                if (stored.isExpired()) {
+                    sessionRepository.removeSession(stored.getId());
+                    return false;
+                }
+                return true;
+            })
             .map(stored -> new DefaultConnectedSession(stored) {
                 @Override
                 public void invalidate() {
@@ -102,9 +110,19 @@ public class DefaultSecurityService implements SecurityService {
 
     @Override
     public Collection<ConnectedSession> getConnectedSessions(Principal principal) {
+        LOGGER.finest("getConnectedSessions() principal " + principal);
         return sessionRepository.findSessions()
             .stream()
-            .filter(stored -> principal.equals(stored.getPrincipal()))
+            .filter(stored -> {
+                if (!principal.equals(stored.getPrincipal())) {
+                    return false;
+                }
+                if (stored.isExpired()) {
+                    sessionRepository.removeSession(stored.getId());
+                    return false;
+                }
+                return true;
+            })
             .map(stored -> new DefaultConnectedSession(stored) {
                 @Override
                 public void invalidate() {
