@@ -29,7 +29,7 @@ public class DelegatingAuthenticationToken extends AbstractAuthenticationToken {
     }
 
     @Override
-    public String getRealm() {
+    public String getSystem() {
         return null;
     }
 

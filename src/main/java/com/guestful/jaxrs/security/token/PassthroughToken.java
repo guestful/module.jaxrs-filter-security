@@ -28,8 +28,8 @@ public class PassthroughToken extends LoginPasswordToken {
         this(null, login);
     }
 
-    public PassthroughToken(String realm, String login) {
-        super(realm, AuthScheme.FORCE, login, null);
+    public PassthroughToken(String system, String login) {
+        super(system, AuthScheme.FORCE, login, null);
     }
 
     @Override

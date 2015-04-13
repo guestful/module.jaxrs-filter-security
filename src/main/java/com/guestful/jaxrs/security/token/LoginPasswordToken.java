@@ -75,7 +75,7 @@ public class LoginPasswordToken extends AbstractAuthenticationToken {
     }
 
     @Override
-    public String getRealm() {
+    public String getSystem() {
         return realm;
     }
 }

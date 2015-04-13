@@ -28,8 +28,8 @@ public class HttpBasicToken extends LoginPasswordToken {
         this(null, scheme, login, password);
     }
 
-    public HttpBasicToken(String realm, AuthScheme scheme, String login, String password) {
-        super(realm, scheme, login, password);
+    public HttpBasicToken(String system, AuthScheme scheme, String login, String password) {
+        super(system, scheme, login, password);
         if (scheme != AuthScheme.BASIC && scheme != AuthScheme.BASICAUTH) {
             throw new IllegalStateException("Bad scheme for " + getClass().getSimpleName() + ": " + getScheme());
         }

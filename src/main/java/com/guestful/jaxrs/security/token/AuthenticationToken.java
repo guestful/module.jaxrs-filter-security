@@ -33,5 +33,5 @@ public interface AuthenticationToken {
 
     boolean isAuthenticationRequired();
 
-    String getRealm();
+    String getSystem();
 }

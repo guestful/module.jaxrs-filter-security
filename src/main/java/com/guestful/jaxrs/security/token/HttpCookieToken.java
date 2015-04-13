@@ -27,20 +27,20 @@ import javax.ws.rs.core.Cookie;
 public class HttpCookieToken extends AbstractAuthenticationToken {
 
     private final Cookie cookie;
-    private final String realm;
+    private final String system;
 
     public HttpCookieToken(Cookie cookie) {
         this(null, cookie);
     }
 
-    public HttpCookieToken(String realm, Cookie cookie) {
+    public HttpCookieToken(String system, Cookie cookie) {
         this.cookie = cookie;
-        this.realm = realm;
+        this.system = system;
     }
 
     @Override
-    public String getRealm() {
-        return realm;
+    public String getSystem() {
+        return system;
     }
 
     @Override
