@@ -27,15 +27,21 @@ public class LoginPasswordToken extends AbstractAuthenticationToken {
     private final String login;
     private final AuthScheme scheme;
     private Object password;
+    private String realm;
 
     public LoginPasswordToken(String login, String password) {
-        this(AuthScheme.FORM, login, password);
+        this(null, AuthScheme.FORM, login, password);
     }
 
-    LoginPasswordToken(AuthScheme scheme, String login, String password) {
+    public LoginPasswordToken(String realm, String login, String password) {
+        this(realm, AuthScheme.FORM, login, password);
+    }
+
+    LoginPasswordToken(String realm, AuthScheme scheme, String login, String password) {
         this.scheme = scheme;
         this.login = login;
         this.password = password;
+        this.realm = realm;
     }
 
     @Override
@@ -66,5 +72,10 @@ public class LoginPasswordToken extends AbstractAuthenticationToken {
     @Override
     public boolean isAuthenticationRequired() {
         return true;
+    }
+
+    @Override
+    public String getRealm() {
+        return realm;
     }
 }

@@ -25,7 +25,11 @@ import com.guestful.jaxrs.security.annotation.AuthScheme;
 public class PassthroughToken extends LoginPasswordToken {
 
     public PassthroughToken(String login) {
-        super(AuthScheme.FORCE, login, null);
+        this(null, login);
+    }
+
+    public PassthroughToken(String realm, String login) {
+        super(realm, AuthScheme.FORCE, login, null);
     }
 
     @Override

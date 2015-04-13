@@ -29,6 +29,11 @@ public class DelegatingAuthenticationToken extends AbstractAuthenticationToken {
     }
 
     @Override
+    public String getRealm() {
+        return null;
+    }
+
+    @Override
     public Object getToken() {
         return null;
     }

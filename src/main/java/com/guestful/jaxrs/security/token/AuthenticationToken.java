@@ -32,4 +32,6 @@ public interface AuthenticationToken {
     boolean isSessionAllowed();
 
     boolean isAuthenticationRequired();
+
+    String getRealm();
 }
