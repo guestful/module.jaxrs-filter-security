@@ -27,7 +27,7 @@ import java.util.Map;
  */
 public class StoredSession implements Serializable, Expirable {
 
-    private static final long serialVersionUID = 3078945930695997491L;
+    private static final long serialVersionUID = 3078945910695997491L;
 
     private boolean isNew;
     private Principal principal;
@@ -36,6 +36,7 @@ public class StoredSession implements Serializable, Expirable {
     private String lastOrigin;
     private String userAgent;
     private String lastUserAgent;
+    private String system;
     private int maxAge;
     private long creationTime;
     private long lastAccessTime;
@@ -57,10 +58,19 @@ public class StoredSession implements Serializable, Expirable {
         setOrigin(session.getOrigin());
         setUserAgent(session.getUserAgent());
         setPrincipal(subject.getPrincipal());
+        setSystem(subject.getSystem());
 
         setLastAccessTime(System.currentTimeMillis());
         setLastOrigin(subject.getOrigin());
         setLastUserAgent(subject.getUserAgent());
+    }
+
+    public String getSystem() {
+        return system;
+    }
+
+    public void setSystem(String system) {
+        this.system = system;
     }
 
     @Override

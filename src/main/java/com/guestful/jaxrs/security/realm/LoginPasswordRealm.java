@@ -16,7 +16,7 @@
 package com.guestful.jaxrs.security.realm;
 
 import com.guestful.jaxrs.security.LoginContext;
-import com.guestful.jaxrs.security.subject.DefaultSubject;
+import com.guestful.jaxrs.security.subject.AuthenticatedSubject;
 import com.guestful.jaxrs.security.subject.Subject;
 import com.guestful.jaxrs.security.token.AuthenticationToken;
 import com.guestful.jaxrs.security.token.LoginPasswordToken;
@@ -52,10 +52,10 @@ public class LoginPasswordRealm extends AbstractRealm {
             throw new BadCredentialException(String.valueOf(token.getToken()));
         }
         if (account.getPrincipal().equals(loginContext.getPrincipal()) && loginContext.getSession(false) != null) {
-            LOGGER.finest("logout() removing old session " + loginContext.getSession().getId());
+            LOGGER.finest("authenticate() removing old session " + loginContext.getSession().getId());
             getSessionRepository().removeSession(loginContext.getSession().getId());
         }
-        return new DefaultSubject(
+        return new AuthenticatedSubject(
             account,
             null,
             token,

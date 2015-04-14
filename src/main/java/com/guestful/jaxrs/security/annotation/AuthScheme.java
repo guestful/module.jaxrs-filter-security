@@ -25,6 +25,7 @@ public enum AuthScheme {
     BASICAUTH,
     FORCE,
     COOKIE,
+    FACEBOOK,
     UNKNOWN;
 
     public static AuthScheme fromHeader(String authHeder) {

@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2013 Guestful (info@guestful.com)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,12 +38,23 @@ public class DelegatingSubject implements Subject {
     private final ContainerRequestContext request;
     private final SecurityContext securityContext;
     private final AuthenticationToken authenticationToken;
+    private final String system;
     private Session session;
 
     public DelegatingSubject(ContainerRequestContext request) {
+        this("", request);
+    }
+
+    public DelegatingSubject(String system, ContainerRequestContext request) {
+        this.system = system;
         this.request = request;
         this.securityContext = request.getSecurityContext();
         this.authenticationToken = new DelegatingAuthenticationToken(securityContext);
+    }
+
+    @Override
+    public String getSystem() {
+        return system;
     }
 
     @Override
@@ -54,7 +65,7 @@ public class DelegatingSubject implements Subject {
     @Override
     public Session getSession(boolean create) {
         if (session == null && create) {
-            session = new DefaultSession();
+            session = new DefaultSession(system);
         }
         return session;
     }

@@ -27,5 +27,5 @@ public interface SessionRepository {
 
     StoredSession findSession(String sessionId);
 
-    Collection<StoredSession> findSessions();
+    Collection<StoredSession> findSessions(String system);
 }

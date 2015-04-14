@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2013 Guestful (info@guestful.com)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 package com.guestful.jaxrs.security.filter;
+
+import com.guestful.jaxrs.security.annotation.Authenticated;
+import com.guestful.jaxrs.security.subject.SubjectSecurityContext;
 
 import javax.annotation.Priority;
 import javax.annotation.security.DenyAll;
@@ -28,6 +31,7 @@ import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.FeatureContext;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.Objects;
 import java.util.logging.Logger;
 
 /**
@@ -58,16 +62,24 @@ public class RolesAllowedFeature implements DynamicFeature {
     public void configure(final ResourceInfo resourceInfo, final FeatureContext configuration) {
         Method am = resourceInfo.getResourceMethod();
 
+        Authenticated authenticated = am.getAnnotation(Authenticated.class);
+        if (authenticated == null) {
+            authenticated = resourceInfo.getResourceClass().getAnnotation(Authenticated.class);
+        }
+        String system = authenticated == null ? null : authenticated.value();
+
         // DenyAll on the method take precedence over RolesAllowed and PermitAll
         if (am.isAnnotationPresent(DenyAll.class)) {
-            configuration.register(new RolesAllowedRequestFilter());
+            configuration.register(new RolesAllowedRequestFilter(Objects.requireNonNull(system, "@Permissions found on " + am + " but no @Authenticated found")));
             return;
         }
 
         // RolesAllowed on the method takes precedence over PermitAll
         RolesAllowed ra = am.getAnnotation(RolesAllowed.class);
         if (ra != null) {
-            configuration.register(new RolesAllowedRequestFilter(ra.value()));
+            configuration.register(new RolesAllowedRequestFilter(
+                Objects.requireNonNull(system, "@Permissions found on " + am + " but no @Authenticated found"),
+                ra.value()));
             return;
         }
 
@@ -82,36 +94,42 @@ public class RolesAllowedFeature implements DynamicFeature {
         // RolesAllowed on the class takes precedence over PermitAll
         ra = resourceInfo.getResourceClass().getAnnotation(RolesAllowed.class);
         if (ra != null) {
-            configuration.register(new RolesAllowedRequestFilter(ra.value()));
+            configuration.register(new RolesAllowedRequestFilter(
+                Objects.requireNonNull(system, "@Permissions found on " + am + " but no @Authenticated found"),
+                ra.value()));
         }
     }
 
     @Priority(Priorities.AUTHORIZATION + 120) // authorization filter - should go after any authentication filters
     private static class RolesAllowedRequestFilter implements ContainerRequestFilter {
+
+        private final String system;
         private final boolean denyAll;
         private final String[] rolesAllowed;
 
-        RolesAllowedRequestFilter() {
+        RolesAllowedRequestFilter(String system) {
             this.denyAll = true;
             this.rolesAllowed = null;
+            this.system = system;
         }
 
-        RolesAllowedRequestFilter(String[] rolesAllowed) {
+        RolesAllowedRequestFilter(String system, String[] rolesAllowed) {
+            this.system = system;
             this.denyAll = false;
             this.rolesAllowed = (rolesAllowed != null) ? rolesAllowed : new String[]{};
         }
 
         @Override
         public void filter(ContainerRequestContext request) throws IOException {
-            LOGGER.finest("enter() " + request.getSecurityContext().getUserPrincipal() + " - " + request.getUriInfo().getRequestUri());
+            SubjectSecurityContext subjectSecurityContext = (SubjectSecurityContext) request.getSecurityContext();
+            LOGGER.finest("enter() " + subjectSecurityContext.getUserPrincipal(system) + " - " + request.getUriInfo().getRequestUri());
             if (!denyAll) {
                 for (String role : rolesAllowed) {
-                    if (request.getSecurityContext().isUserInRole(role)) {
+                    if (subjectSecurityContext.isUserInRole(system, role)) {
                         return;
                     }
                 }
             }
-
             throw new ForbiddenException();
         }
     }

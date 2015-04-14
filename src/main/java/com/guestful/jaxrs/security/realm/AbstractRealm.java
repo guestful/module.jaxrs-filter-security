@@ -15,7 +15,7 @@
  */
 package com.guestful.jaxrs.security.realm;
 
-import com.guestful.jaxrs.security.session.SessionConfiguration;
+import com.guestful.jaxrs.security.session.SessionConfigurations;
 import com.guestful.jaxrs.security.session.SessionRepository;
 import com.guestful.jaxrs.security.subject.Subject;
 import com.guestful.jaxrs.security.token.AuthenticationToken;
@@ -30,7 +30,7 @@ public abstract class AbstractRealm implements Realm {
 
     private CredentialsMatcher credentialsMatcher;
     private AccountRepository accountRepository;
-    private SessionConfiguration sessionConfiguration;
+    private SessionConfigurations sessionConfigurations;
     private SessionRepository sessionRepository;
 
     private final Class<?>[] types;
@@ -57,13 +57,13 @@ public abstract class AbstractRealm implements Realm {
         this.accountRepository = accountRepository;
     }
 
-    public SessionConfiguration getSessionConfiguration() {
-        return sessionConfiguration;
+    public SessionConfigurations getSessionConfigurations() {
+        return sessionConfigurations;
     }
 
     @Inject
-    public void setSessionConfiguration(SessionConfiguration sessionConfiguration) {
-        this.sessionConfiguration = sessionConfiguration;
+    public void setSessionConfigurations(SessionConfigurations sessionConfigurations) {
+        this.sessionConfigurations = sessionConfigurations;
     }
 
     public SessionRepository getSessionRepository() {

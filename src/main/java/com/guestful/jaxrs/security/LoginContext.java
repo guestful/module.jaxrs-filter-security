@@ -41,4 +41,5 @@ public interface LoginContext {
     default Session getSession() {
         return getSession(true);
     }
+
 }

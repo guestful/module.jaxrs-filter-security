@@ -34,7 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author Mathieu Carbou (mathieu.carbou@gmail.com)
  */
-public class DefaultSubject implements Subject {
+public class AuthenticatedSubject implements Subject {
 
     private final Account account;
     private Session session;
@@ -45,11 +45,11 @@ public class DefaultSubject implements Subject {
     private final String userAgent;
     private final ContainerRequestContext request;
 
-    public DefaultSubject(Account account,
-                          Session session,
-                          AuthenticationToken authenticationToken,
-                          SessionConfiguration sessionConfiguration,
-                          LoginContext loginContext) {
+    public AuthenticatedSubject(Account account,
+                                Session session,
+                                AuthenticationToken authenticationToken,
+                                SessionConfiguration sessionConfiguration,
+                                LoginContext loginContext) {
         this.account = account;
         this.authenticationToken = authenticationToken;
         this.session = session;

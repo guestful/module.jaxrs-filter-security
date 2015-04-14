@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2013 Guestful (info@guestful.com)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,6 @@ import com.guestful.jaxrs.security.token.AuthenticationToken;
 import javax.ws.rs.container.ContainerRequestContext;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.concurrent.Callable;
 
 /**
  * date 2014-05-23
@@ -39,6 +38,10 @@ public interface Subject extends LoginContext {
 
     AuthenticationToken getAuthenticationToken();
 
+    default String getSystem() {
+        return getAuthenticationToken() == null ? null : getAuthenticationToken().getSystem();
+    }
+
     void setAttribute(String name, Object value);
 
     Object getAttribute(String name);
@@ -53,44 +56,6 @@ public interface Subject extends LoginContext {
 
     default void logout() {
         SubjectContext.logout(this);
-    }
-
-    default Runnable associateWith(Runnable r) {
-        Subject that = this;
-        return new Runnable() {
-            @Override
-            public void run() {
-                Subject subject = SubjectContext.getSubject(false);
-                SubjectContext.setCurrentSubject(that);
-                try {
-                    r.run();
-                } finally {
-                    SubjectContext.clearCurrentSubject();
-                    if (subject != null) {
-                        SubjectContext.setCurrentSubject(subject);
-                    }
-                }
-            }
-        };
-    }
-
-    default <V> Callable<V> associateWith(Callable<V> c) {
-        Subject that = this;
-        return new Callable<V>() {
-            @Override
-            public V call() throws Exception {
-                Subject subject = SubjectContext.getSubject(false);
-                SubjectContext.setCurrentSubject(that);
-                try {
-                    return c.call();
-                } finally {
-                    SubjectContext.clearCurrentSubject();
-                    if (subject != null) {
-                        SubjectContext.setCurrentSubject(subject);
-                    }
-                }
-            }
-        };
     }
 
     default boolean isAnonymous() {

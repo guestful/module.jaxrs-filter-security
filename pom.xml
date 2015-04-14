@@ -107,6 +107,12 @@
             <version>2.24.0</version>
             <optional>true</optional>
         </dependency>
+        <dependency>
+            <groupId>com.guestful.module</groupId>
+            <artifactId>guestful.module.facebook-client</artifactId>
+            <version>1.0</version>
+            <optional>true</optional>
+        </dependency>
 
         <dependency>
             <groupId>junit</groupId>

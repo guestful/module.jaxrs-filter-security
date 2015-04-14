@@ -25,7 +25,7 @@ import com.guestful.jaxrs.security.annotation.AuthScheme;
 public class HttpBasicToken extends LoginPasswordToken {
 
     public HttpBasicToken(AuthScheme scheme, String login, String password) {
-        this(null, scheme, login, password);
+        this("", scheme, login, password);
     }
 
     public HttpBasicToken(String system, AuthScheme scheme, String login, String password) {

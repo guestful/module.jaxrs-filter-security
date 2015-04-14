@@ -30,7 +30,7 @@ public class HttpCookieToken extends AbstractAuthenticationToken {
     private final String system;
 
     public HttpCookieToken(Cookie cookie) {
-        this(null, cookie);
+        this("", cookie);
     }
 
     public HttpCookieToken(String system, Cookie cookie) {

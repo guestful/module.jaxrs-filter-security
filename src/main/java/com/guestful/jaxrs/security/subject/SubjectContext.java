@@ -22,6 +22,8 @@ import com.guestful.jaxrs.security.token.AuthenticationToken;
 import javax.security.auth.login.LoginException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * date 2014-05-23
@@ -39,19 +41,22 @@ public class SubjectContext {
         return SERVICE;
     }
 
-    private static final ThreadLocal<Subject> SUBJECT = new ThreadLocal<>();
+    private static final ThreadLocal<Map<String, Subject>> SUBJECTS = new ThreadLocal<Map<String, Subject>>() {
+        @Override
+        protected Map<String, Subject> initialValue() {
+            return new ConcurrentHashMap<>();
+        }
+    };
 
     static void logout(Subject subject) {
         if (subject == null) throw new NullPointerException();
         getSecurityService().logout(subject);
-        if (getSubject(false) == subject) {
-            clearCurrentSubject();
-        }
+        SUBJECTS.get().remove(subject.getSystem(), subject);
     }
 
     static Collection<ConnectedSession> getConnectedSessions(Subject subject) {
         if (subject.getPrincipal() != null && subject.getSession(false) != null && subject.getAuthenticationToken() != null) {
-            return getSecurityService().getConnectedSessions(subject.getPrincipal());
+            return getSecurityService().getConnectedSessions(subject.getSystem(), subject.getPrincipal());
         }
         return Collections.emptyList();
     }
@@ -65,14 +70,21 @@ public class SubjectContext {
 
     public static Subject login(AuthenticationToken token) throws LoginException {
         if (token == null) throw new NullPointerException();
-        Subject current = getSubject();
+        Subject current = getSubject(token.getSystem(), false);
+        if (current == null) {
+            throw new IllegalStateException("No login context found");
+        }
         Subject subject = getSecurityService().login(token, current);
         setCurrentSubject(subject);
         return subject;
     }
 
+    public static Collection<Subject> getSubjects() {
+        return SUBJECTS.get().values();
+    }
+
     public static Subject getSubject() {
-        return getSubject(true);
+        return getSubject("", true);
     }
 
     public static Subject getSubject(String system) {
@@ -80,13 +92,14 @@ public class SubjectContext {
     }
 
     public static Subject getSubject(boolean createAnonymousIfNone) {
-        return getSubject(null, createAnonymousIfNone);
+        return getSubject("", createAnonymousIfNone);
     }
 
     public static Subject getSubject(String system, boolean createAnonymousIfNone) {
-        Subject subject = SUBJECT.get();
+        Map<String, Subject> subjects = SUBJECTS.get();
+        Subject subject = subjects.get(system);
         if (subject == null && createAnonymousIfNone) {
-            subject = new AnonymousSubject();
+            subject = new AnonymousSubject(system);
         }
         return subject;
     }
@@ -94,19 +107,20 @@ public class SubjectContext {
     public static void setCurrentSubject(Subject subject) {
         if (subject == null) throw new NullPointerException();
         if (subject instanceof AnonymousSubject) throw new IllegalArgumentException();
-        SUBJECT.set(subject);
+        SUBJECTS.get().put(subject.getSystem(), subject);
     }
 
-    public static void clearCurrentSubject() {
-        Subject current = getSubject(false);
-        if (current != null) {
-            SUBJECT.remove();
-        }
+    public static void clear() {
+        SUBJECTS.remove();
     }
 
     public static void accessed(Subject subject) {
+        accessed(null, subject);
+    }
+
+    public static void accessed(String system, Subject subject) {
         if (subject == null) throw new NullPointerException();
-        getSecurityService().accessed(subject);
+        getSecurityService().accessed(system, subject);
     }
 
 }

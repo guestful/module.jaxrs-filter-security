@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2013 Guestful (info@guestful.com)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -88,11 +88,14 @@ public class DefaultSecurityService implements SecurityService {
     }
 
     @Override
-    public Collection<ConnectedSession> getConnectedSessions() {
-        LOGGER.finest("getConnectedSessions()");
+    public Collection<ConnectedSession> getConnectedSessions(Principal principal) {
+        LOGGER.finest("getConnectedSessions() principal " + principal);
         return sessionRepository.findSessions()
             .stream()
             .filter(stored -> {
+                if (!principal.equals(stored.getPrincipal())) {
+                    return false;
+                }
                 if (stored.isExpired()) {
                     sessionRepository.removeSession(stored.getId());
                     return false;
@@ -109,14 +112,11 @@ public class DefaultSecurityService implements SecurityService {
     }
 
     @Override
-    public Collection<ConnectedSession> getConnectedSessions(Principal principal) {
-        LOGGER.finest("getConnectedSessions() principal " + principal);
-        return sessionRepository.findSessions()
+    private Collection<ConnectedSession> getConnectedSessions(String system) {
+        LOGGER.finest("getConnectedSessions()");
+        return sessionRepository.findSessions(system)
             .stream()
             .filter(stored -> {
-                if (!principal.equals(stored.getPrincipal())) {
-                    return false;
-                }
                 if (stored.isExpired()) {
                     sessionRepository.removeSession(stored.getId());
                     return false;

@@ -33,6 +33,20 @@ class AnonymousSubject implements Subject {
 
     private final Map<String, Object> attributes = new ConcurrentHashMap<>();
     private Session session;
+    private final String system;
+
+    public AnonymousSubject() {
+        this("");
+    }
+
+    public AnonymousSubject(String system) {
+        this.system = system;
+    }
+
+    @Override
+    public String getSystem() {
+        return system;
+    }
 
     @Override
     public Principal getPrincipal() {
@@ -42,7 +56,7 @@ class AnonymousSubject implements Subject {
     @Override
     public Session getSession(boolean create) {
         if (session == null && create) {
-            session = new DefaultSession();
+            session = new DefaultSession(system);
         }
         return session;
     }

@@ -29,11 +29,11 @@ import java.util.logging.Logger;
 /**
  * @author Mathieu Carbou (mathieu.carbou@gmail.com)
  */
-public class PassthroughRealm extends AbstractRealm {
+public class FacebookRealm extends AbstractRealm {
 
-    private static final Logger LOGGER = Logger.getLogger(PassthroughRealm.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(FacebookRealm.class.getName());
 
-    public PassthroughRealm() {
+    public FacebookRealm() {
         super(PassthroughToken.class);
     }
 
@@ -60,3 +60,23 @@ public class PassthroughRealm extends AbstractRealm {
     }
 
 }
+
+/*
+
+
+        // additional optional verification
+        if (data.signedRequest) {
+            FacebookUnsignedRequest facebookUnsignedRequest = facebookClient.unsignRequest(data.signedRequest as String)
+            if (facebookUserId != facebookUnsignedRequest.userId) {
+                throw new NotAuthorizedException("Invalid Signed Request", "GBASICAUTH realm=\"" + uriInfo.getBaseUri() + "\"")
+            }
+        }
+
+
+        Map guest = onError FacebookClientException, 'accessToken', 'invalid', { guestHelper.findGuestByFacebook(data.accessToken as String, APIToken.current, requestLocale) }
+        if (facebookUserId != guest.facebookId) {
+            throw new NotAuthorizedException("Invalid Access Token", "GBASICAUTH realm=\"" + uriInfo.getBaseUri() + "\"")
+        }
+
+
+*/

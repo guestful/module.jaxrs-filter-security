@@ -30,7 +30,7 @@ public class DelegatingAuthenticationToken extends AbstractAuthenticationToken {
 
     @Override
     public String getSystem() {
-        return null;
+        return "";
     }
 
     @Override

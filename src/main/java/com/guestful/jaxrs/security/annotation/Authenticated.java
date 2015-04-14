@@ -26,5 +26,6 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Authenticated {
+    String value() default "";
     AuthScheme challenge() default AuthScheme.BASICAUTH;
 }
