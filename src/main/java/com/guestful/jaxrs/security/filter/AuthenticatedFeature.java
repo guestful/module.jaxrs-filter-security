@@ -17,7 +17,10 @@ package com.guestful.jaxrs.security.filter;
 
 import com.guestful.jaxrs.security.AuthenticationException;
 import com.guestful.jaxrs.security.annotation.Authenticated;
-import com.guestful.jaxrs.security.subject.SubjectSecurityContext;
+import com.guestful.jaxrs.security.subject.Subject;
+import com.guestful.jaxrs.security.subject.SubjectContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Priority;
 import javax.ws.rs.Priorities;
@@ -27,14 +30,13 @@ import javax.ws.rs.container.DynamicFeature;
 import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.FeatureContext;
 import java.io.IOException;
-import java.util.logging.Logger;
 
 /**
  * @author Mathieu Carbou (mathieu.carbou@gmail.com)
  */
 public class AuthenticatedFeature implements DynamicFeature {
 
-    private static final Logger LOGGER = Logger.getLogger(AuthenticatedFilter.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticatedFilter.class);
 
     @Override
     public void configure(ResourceInfo resourceInfo, FeatureContext context) {
@@ -58,10 +60,10 @@ public class AuthenticatedFeature implements DynamicFeature {
 
         @Override
         public void filter(ContainerRequestContext request) throws IOException {
-            LOGGER.finest("enter() " + request.getSecurityContext().getUserPrincipal() + " - " + request.getUriInfo().getRequestUri());
-            SubjectSecurityContext subjectSecurityContext = (SubjectSecurityContext) request.getSecurityContext();
             String system = authenticated.value();
-            if (subjectSecurityContext.getUserPrincipal(system) == null) {
+            Subject subject = SubjectContext.getSubject(system);
+            LOGGER.trace("enter() {} - {}", subject, request.getUriInfo().getRequestUri());
+            if (subject.getPrincipal() == null) {
                 throw new AuthenticationException("@Authenticated", authenticated.challenge(), request);
             }
         }

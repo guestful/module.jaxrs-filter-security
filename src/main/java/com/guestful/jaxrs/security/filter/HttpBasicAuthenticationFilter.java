@@ -17,10 +17,12 @@ package com.guestful.jaxrs.security.filter;
 
 import com.guestful.jaxrs.security.AuthenticationException;
 import com.guestful.jaxrs.security.annotation.AuthScheme;
+import com.guestful.jaxrs.security.subject.Subject;
 import com.guestful.jaxrs.security.subject.SubjectContext;
-import com.guestful.jaxrs.security.subject.SubjectSecurityContext;
 import com.guestful.jaxrs.security.token.AuthenticationToken;
 import com.guestful.jaxrs.security.token.HttpBasicToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Priority;
 import javax.security.auth.login.LoginException;
@@ -32,7 +34,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Locale;
-import java.util.logging.Logger;
 
 /**
  * date 2014-05-23
@@ -42,39 +43,37 @@ import java.util.logging.Logger;
 @Priority(Priorities.AUTHENTICATION + 121)
 public class HttpBasicAuthenticationFilter implements ContainerRequestFilter {
 
-    private static final Logger LOGGER = Logger.getLogger(HttpBasicAuthenticationFilter.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(HttpBasicAuthenticationFilter.class);
     private static final String SYSTEM_HEADER = "X-Authorization-System";
 
     @Override
     public void filter(ContainerRequestContext request) throws IOException {
-        SubjectSecurityContext subjectSecurityContext = (SubjectSecurityContext) request.getSecurityContext();
         String system = request.getHeaderString(SYSTEM_HEADER);
         if (system == null) {
             system = "";
         }
-        if (subjectSecurityContext.getUserPrincipal(system) == null) {
-            String authzHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-            if (authzHeader != null) {
-                LOGGER.finest("enter() " + subjectSecurityContext.getUserPrincipal(system) + " - " + request.getUriInfo().getRequestUri());
-                AuthScheme authScheme = AuthScheme.fromHeader(authzHeader.toUpperCase(Locale.ENGLISH));
-                if (authScheme != AuthScheme.BASIC && authScheme != AuthScheme.BASICAUTH) {
-                    throw new AuthenticationException("Unsupported scheme", request);
-                }
-                String[] parts = authzHeader.split(" ");
-                if (parts.length < 2) {
-                    throw new AuthenticationException("Malformed Basic HTTP Authorization", request);
-                }
-                String userInfo = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
-                parts = userInfo.split(":", 2);
-                if (parts.length < 2) {
-                    throw new AuthenticationException("Malformed Basic HTTP Authorization", request);
-                }
-                AuthenticationToken token = new HttpBasicToken(system, authScheme, parts[0], parts[1]);
-                try {
-                    SubjectContext.login(token);
-                } catch (LoginException e) {
-                    throw new AuthenticationException(e.getMessage(), e, request);
-                }
+        Subject subject = SubjectContext.getSubject(system);
+        String authzHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+        if (subject.getPrincipal() == null && authzHeader != null) {
+            LOGGER.trace("enter() {} - {}", subject, request.getUriInfo().getRequestUri());
+            AuthScheme authScheme = AuthScheme.fromHeader(authzHeader.toUpperCase(Locale.ENGLISH));
+            if (authScheme != AuthScheme.BASIC && authScheme != AuthScheme.BASICAUTH) {
+                throw new AuthenticationException("Unsupported scheme", request);
+            }
+            String[] parts = authzHeader.split(" ");
+            if (parts.length < 2) {
+                throw new AuthenticationException("Malformed Basic HTTP Authorization", request);
+            }
+            String userInfo = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
+            parts = userInfo.split(":", 2);
+            if (parts.length < 2) {
+                throw new AuthenticationException("Malformed Basic HTTP Authorization", request);
+            }
+            AuthenticationToken token = new HttpBasicToken(system, authScheme, parts[0], parts[1]);
+            try {
+                SubjectContext.login(token);
+            } catch (LoginException e) {
+                throw new AuthenticationException(e.getMessage(), e, request);
             }
         }
     }

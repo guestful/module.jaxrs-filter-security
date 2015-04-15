@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2013 Guestful (info@guestful.com)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,11 +17,12 @@ package com.guestful.jaxrs.security.session;
 
 import org.redisson.Redisson;
 import org.redisson.core.RBucket;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
@@ -29,7 +30,7 @@ import java.util.stream.Collectors;
  */
 public class RedissonSessionRepository implements SessionRepository {
 
-    private static final Logger LOGGER = Logger.getLogger(RedissonSessionRepository.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(RedissonSessionRepository.class);
     private static final String PREFIX = "api:sessions:";
     private final Redisson redisson;
 
@@ -38,20 +39,23 @@ public class RedissonSessionRepository implements SessionRepository {
     }
 
     @Override
-    public void saveSession(StoredSession storedSession) {
-        LOGGER.finest(storedSession.getPrincipal() + "  Saving session " + storedSession.getId());
-        redisson.getBucket(PREFIX + storedSession.getId()).set(storedSession, storedSession.getTTL(), TimeUnit.SECONDS);
+    public void saveSession(String system, StoredSession storedSession) {
+        String key = key(system, storedSession.getId());
+        LOGGER.trace(storedSession.getPrincipal() + "  Saving session " + storedSession.getId());
+        redisson.getBucket(key).set(storedSession, storedSession.getTTL(), TimeUnit.SECONDS);
     }
 
     @Override
-    public void removeSession(String sessionId) {
-        LOGGER.finest("removeSession() " + sessionId);
-        redisson.getBucket(PREFIX + sessionId).delete();
+    public void removeSession(String system, String sessionId) {
+        String key = key(system, sessionId);
+        LOGGER.trace("removeSession() " + sessionId);
+        redisson.getBucket(key).delete();
     }
 
     @Override
-    public StoredSession findSession(String sessionId) {
-        RBucket<StoredSession> bucket = redisson.<StoredSession>getBucket(PREFIX + sessionId);
+    public StoredSession findSession(String system, String sessionId) {
+        String key = key(system, sessionId);
+        RBucket<StoredSession> bucket = redisson.<StoredSession>getBucket(key);
         try {
             return bucket.get();
         } catch (RuntimeException e) {
@@ -62,8 +66,13 @@ public class RedissonSessionRepository implements SessionRepository {
     }
 
     @Override
-    public Collection<StoredSession> findSessions() {
-        return redisson.<StoredSession>getBuckets(PREFIX + "*").stream().map(RBucket::get).collect(Collectors.toList());
+    public Collection<StoredSession> findSessions(String system) {
+        String key = key(system, "*");
+        return redisson.<StoredSession>getBuckets(key).stream().map(RBucket::get).collect(Collectors.toList());
+    }
+
+    private String key(String system, String id) {
+        return system == null || system.equals("") ? (PREFIX + id) : (PREFIX + system + ":" + id);
     }
 
 }

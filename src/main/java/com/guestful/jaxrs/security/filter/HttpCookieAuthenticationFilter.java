@@ -16,9 +16,11 @@
 package com.guestful.jaxrs.security.filter;
 
 import com.guestful.jaxrs.security.session.SessionConfigurations;
+import com.guestful.jaxrs.security.subject.Subject;
 import com.guestful.jaxrs.security.subject.SubjectContext;
-import com.guestful.jaxrs.security.subject.SubjectSecurityContext;
 import com.guestful.jaxrs.security.token.HttpCookieToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Priority;
 import javax.inject.Inject;
@@ -29,9 +31,6 @@ import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.core.Cookie;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.TreeSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * date 2014-05-23
@@ -41,7 +40,7 @@ import java.util.logging.Logger;
 @Priority(Priorities.AUTHENTICATION + 122)
 public class HttpCookieAuthenticationFilter implements ContainerRequestFilter {
 
-    private static final Logger LOGGER = Logger.getLogger(HttpCookieAuthenticationFilter.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(HttpCookieAuthenticationFilter.class);
 
     private final SessionConfigurations sessionConfigurations;
 
@@ -52,26 +51,23 @@ public class HttpCookieAuthenticationFilter implements ContainerRequestFilter {
 
     @Override
     public void filter(ContainerRequestContext request) throws IOException {
-        SubjectSecurityContext subjectSecurityContext = (SubjectSecurityContext) request.getSecurityContext();
-        Collection<String> expired = new TreeSet<>();
+        Collection<String> expired = SessionCookieFilter.getExpiredSystems(request);
         sessionConfigurations.forEach((system, config) -> {
-            if (config.getCookieName() != null && subjectSecurityContext.getUserPrincipal(system) == null) {
+            Subject subject = SubjectContext.getSubject(system);
+            if (config.getCookieName() != null && subject.getPrincipal() == null) {
                 Cookie cookie = request.getCookies().get(config.getCookieName());
                 if (cookie != null) {
-                    LOGGER.finest("enter() " + subjectSecurityContext.getUserPrincipal(system) + " - " + request.getUriInfo().getRequestUri());
+                    LOGGER.trace("enter() {} - {}", subject, request.getUriInfo().getRequestUri());
                     HttpCookieToken token = new HttpCookieToken(system, cookie);
                     try {
                         SubjectContext.login(token);
                     } catch (LoginException e) {
-                        LOGGER.log(Level.FINEST, "login failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+                        LOGGER.trace("login failed: {}: {}", e.getClass().getSimpleName(), e.getMessage());
                         expired.add(system);
                     }
                 }
             }
         });
-        if (!expired.isEmpty()) {
-            request.setProperty(SessionCookieFilter.SESSION_COOKIE_EXPIRED, expired);
-        }
     }
 
 }

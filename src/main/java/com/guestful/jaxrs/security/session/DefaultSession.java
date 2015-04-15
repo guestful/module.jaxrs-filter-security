@@ -34,14 +34,13 @@ public class DefaultSession implements Session {
     private final String lastOrigin;
     private final String userAgent;
     private final String lastUserAgent;
-    private final String system;
     private final int maxAge;
     private final boolean isNew;
     private final long creationTime;
     private final long lastAccessTime;
     private final Map<String, Object> attributes = new ConcurrentHashMap<>();
 
-    public DefaultSession(String system) {
+    public DefaultSession() {
         this.id = Crypto.uuid();
         this.creationTime = System.currentTimeMillis();
         this.maxAge = -1;
@@ -51,7 +50,6 @@ public class DefaultSession implements Session {
         this.lastAccessTime = this.creationTime;
         this.lastOrigin = null;
         this.lastUserAgent = null;
-        this.system = system;
     }
 
     public DefaultSession(Subject subject, int maxAge) {
@@ -64,7 +62,6 @@ public class DefaultSession implements Session {
         this.lastAccessTime = this.creationTime;
         this.lastOrigin = this.origin;
         this.lastUserAgent = this.userAgent;
-        this.system = subject == null ? null : subject.getSystem();
     }
 
     public DefaultSession(StoredSession storedSession) {
@@ -78,12 +75,6 @@ public class DefaultSession implements Session {
         this.lastOrigin = storedSession.getLastOrigin();
         this.lastUserAgent = storedSession.getLastUserAgent();
         this.isNew = false;
-        this.system = storedSession.getSystem();
-    }
-
-    @Override
-    public String getSystem() {
-        return system;
     }
 
     @Override

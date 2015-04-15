@@ -17,7 +17,9 @@ package com.guestful.jaxrs.security.filter;
 
 import com.guestful.jaxrs.security.session.SessionConfigurations;
 import com.guestful.jaxrs.security.subject.Subject;
-import com.guestful.jaxrs.security.subject.SubjectSecurityContext;
+import com.guestful.jaxrs.security.subject.SubjectContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Priority;
 import javax.inject.Inject;
@@ -26,7 +28,6 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
 import java.io.IOException;
-import java.util.logging.Logger;
 
 /**
  * date 2014-05-23
@@ -36,7 +37,7 @@ import java.util.logging.Logger;
 @Priority(Priorities.AUTHORIZATION + 122)
 public class SessionFilter implements ContainerResponseFilter {
 
-    private static final Logger LOGGER = Logger.getLogger(SessionFilter.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(SessionFilter.class);
 
     private final SessionConfigurations sessionConfigurations;
 
@@ -47,11 +48,12 @@ public class SessionFilter implements ContainerResponseFilter {
 
     @Override
     public void filter(ContainerRequestContext request, ContainerResponseContext response) throws IOException {
-        SubjectSecurityContext subjectSecurityContext = (SubjectSecurityContext) request.getSecurityContext();
         sessionConfigurations.forEach((system, config) -> {
-            Subject subject = subjectSecurityContext.getSubject(system);
-            LOGGER.finest("exit() " + subjectSecurityContext.getUserPrincipal(system) + " - " + request.getUriInfo().getRequestUri() + " - save session " + subject.getSession().getId());
-            subject.accessed();
+            Subject subject = SubjectContext.getSubject(system);
+            if (subject.getPrincipal() != null && subject.getSession(false) != null) {
+                LOGGER.trace("exit() {} - {} - record access on session {}", subject, request.getUriInfo().getRequestUri(), subject.getSession().getId());
+                subject.accessed();
+            }
         });
     }
 

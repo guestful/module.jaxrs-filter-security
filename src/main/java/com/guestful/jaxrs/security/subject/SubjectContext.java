@@ -61,6 +61,8 @@ public class SubjectContext {
         return Collections.emptyList();
     }
 
+    // PUBLIC
+
     public static void setSecurityService(SecurityService securityService) {
         if (SERVICE != null) {
             throw new IllegalStateException(SecurityService.class.getSimpleName() + " already set");
@@ -115,12 +117,8 @@ public class SubjectContext {
     }
 
     public static void accessed(Subject subject) {
-        accessed(null, subject);
-    }
-
-    public static void accessed(String system, Subject subject) {
         if (subject == null) throw new NullPointerException();
-        getSecurityService().accessed(system, subject);
+        getSecurityService().accessed(subject);
     }
 
 }

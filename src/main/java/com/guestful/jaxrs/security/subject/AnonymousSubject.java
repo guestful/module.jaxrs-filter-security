@@ -56,7 +56,7 @@ class AnonymousSubject implements Subject {
     @Override
     public Session getSession(boolean create) {
         if (session == null && create) {
-            session = new DefaultSession(system);
+            session = new DefaultSession();
         }
         return session;
     }
@@ -108,7 +108,7 @@ class AnonymousSubject implements Subject {
 
     @Override
     public String toString() {
-        return "<anonymous>";
+        return system + ":<anonymous>";
     }
 
 }

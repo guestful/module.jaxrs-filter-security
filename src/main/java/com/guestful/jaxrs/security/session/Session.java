@@ -25,8 +25,6 @@ import java.util.Map;
 public interface Session extends Expirable {
     String getId();
 
-    String getSystem();
-
     String getOrigin();
 
     String getLastOrigin();

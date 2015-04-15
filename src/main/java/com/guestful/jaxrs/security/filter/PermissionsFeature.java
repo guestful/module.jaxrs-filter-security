@@ -19,7 +19,9 @@ import com.guestful.jaxrs.security.AuthenticationException;
 import com.guestful.jaxrs.security.annotation.Authenticated;
 import com.guestful.jaxrs.security.annotation.Permissions;
 import com.guestful.jaxrs.security.subject.Subject;
-import com.guestful.jaxrs.security.subject.SubjectSecurityContext;
+import com.guestful.jaxrs.security.subject.SubjectContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Priority;
 import javax.ws.rs.ForbiddenException;
@@ -32,14 +34,13 @@ import javax.ws.rs.core.FeatureContext;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.*;
-import java.util.logging.Logger;
 
 /**
  * @author Mathieu Carbou (mathieu.carbou@gmail.com)
  */
 public class PermissionsFeature implements DynamicFeature {
 
-    private static final Logger LOGGER = Logger.getLogger(PermissionFilter.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(PermissionFilter.class);
 
     @Override
     public void configure(ResourceInfo resourceInfo, FeatureContext context) {
@@ -81,17 +82,16 @@ public class PermissionsFeature implements DynamicFeature {
 
         @Override
         public void filter(ContainerRequestContext request) throws IOException {
-            SubjectSecurityContext subjectSecurityContext = (SubjectSecurityContext) request.getSecurityContext();
-            LOGGER.finest("enter() " + subjectSecurityContext.getUserPrincipal(system) + " - " + request.getUriInfo().getRequestUri());
+            Subject subject = SubjectContext.getSubject(system);
+            LOGGER.trace("enter() {} - {}", subject, request.getUriInfo().getRequestUri());
+            if (subject.getPrincipal() == null) {
+                throw new AuthenticationException("@Permissions", request);
+            }
             Map<String, String> ctx = new LinkedHashMap<>();
             for (String var : vars) {
                 String val = request.getUriInfo().getPathParameters().getFirst(var);
                 ctx.put(var, val == null ? "" : val);
             }
-            if (subjectSecurityContext.getUserPrincipal(system) == null) {
-                throw new AuthenticationException("@Permissions", request);
-            }
-            Subject permissionSecurityContext = subjectSecurityContext.getSubject(system);
             Collection<String> resolved = new HashSet<>();
             for (String permission : permissions) {
                 for (Map.Entry<String, String> entry : ctx.entrySet()) {
@@ -99,7 +99,7 @@ public class PermissionsFeature implements DynamicFeature {
                 }
                 resolved.add(permission);
             }
-            if (!permissionSecurityContext.isPermitted(resolved)) {
+            if (!subject.isPermitted(resolved)) {
                 throw new ForbiddenException("Invalid permissions");
             }
         }

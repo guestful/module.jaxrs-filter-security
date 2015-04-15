@@ -65,7 +65,7 @@ public class DelegatingSubject implements Subject {
     @Override
     public Session getSession(boolean create) {
         if (session == null && create) {
-            session = new DefaultSession(system);
+            session = new DefaultSession();
         }
         return session;
     }
@@ -122,7 +122,7 @@ public class DelegatingSubject implements Subject {
 
     @Override
     public String toString() {
-        return getPrincipal() == null ? "<anonymous>" : getPrincipal().getName();
+        return system + ":" + (getPrincipal() == null ? "<anonymous>" : getPrincipal().getName());
     }
 
 }

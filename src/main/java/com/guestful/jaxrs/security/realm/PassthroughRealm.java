@@ -20,42 +20,39 @@ import com.guestful.jaxrs.security.subject.AuthenticatedSubject;
 import com.guestful.jaxrs.security.subject.Subject;
 import com.guestful.jaxrs.security.token.AuthenticationToken;
 import com.guestful.jaxrs.security.token.PassthroughToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.security.auth.login.AccountLockedException;
 import javax.security.auth.login.AccountNotFoundException;
 import javax.security.auth.login.LoginException;
-import java.util.logging.Logger;
 
 /**
  * @author Mathieu Carbou (mathieu.carbou@gmail.com)
  */
 public class PassthroughRealm extends AbstractRealm {
 
-    private static final Logger LOGGER = Logger.getLogger(PassthroughRealm.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(PassthroughRealm.class);
 
     public PassthroughRealm() {
         super(PassthroughToken.class);
     }
 
     @Override
-    public Subject authenticate(AuthenticationToken token, LoginContext loginContext) throws LoginException {
-        LOGGER.finest("authenticate() Find account for token " + token);
-        Account account = getAccountRepository().findAccount(token);
+    public Subject authenticate(AuthenticationToken authToken, LoginContext loginContext) throws LoginException {
+        LOGGER.trace("authenticate() Find account for token " + authToken);
+        Account account = getAccountRepository().findAccount(authToken);
         if (account == null) {
-            throw new AccountNotFoundException(String.valueOf(token.getToken()));
+            throw new AccountNotFoundException(String.valueOf(authToken.getToken()));
         }
         if (account.isLocked()) {
             throw new AccountLockedException(account.getPrincipal().getName());
         }
-        if (account.getPrincipal().equals(loginContext.getPrincipal()) && loginContext.getSession(false) != null) {
-            LOGGER.finest("authenticate() removing old session " + loginContext.getSession().getId());
-            getSessionRepository().removeSession(loginContext.getSession().getId());
-        }
         return new AuthenticatedSubject(
             account,
             null,
-            token,
-            getSessionConfiguration(),
+            authToken,
+            getSessionConfigurations().getConfiguration(authToken.getSystem()),
             loginContext);
     }
 

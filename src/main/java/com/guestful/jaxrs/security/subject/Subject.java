@@ -47,7 +47,7 @@ public interface Subject extends LoginContext {
     Object getAttribute(String name);
 
     default boolean isRemembered() {
-        return getPrincipal() != null && getAuthenticationToken() != null && !isAuthenticated();
+        return getPrincipal() != null && getAuthenticationToken() != null && !getAuthenticationToken().isAuthenticationRequired();
     }
 
     default boolean isAuthenticated() {

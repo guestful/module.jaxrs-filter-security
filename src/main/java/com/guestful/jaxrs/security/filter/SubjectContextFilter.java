@@ -19,6 +19,8 @@ import com.guestful.jaxrs.security.session.SessionConfigurations;
 import com.guestful.jaxrs.security.subject.DelegatingSecurityContext;
 import com.guestful.jaxrs.security.subject.DelegatingSubject;
 import com.guestful.jaxrs.security.subject.SubjectContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Priority;
 import javax.inject.Inject;
@@ -30,7 +32,6 @@ import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
 import java.io.IOException;
-import java.util.logging.Logger;
 
 /**
  * date 2014-05-23
@@ -40,7 +41,7 @@ import java.util.logging.Logger;
 @Priority(Priorities.AUTHENTICATION + 120)
 public class SubjectContextFilter implements ContainerRequestFilter, ContainerResponseFilter {
 
-    private static final Logger LOGGER = Logger.getLogger(SubjectContextFilter.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(SubjectContextFilter.class);
 
     private final Provider<HttpServletRequest> rawRequest;
     private final SessionConfigurations sessionConfigurations;
@@ -53,20 +54,21 @@ public class SubjectContextFilter implements ContainerRequestFilter, ContainerRe
 
     @Override
     public void filter(ContainerRequestContext request) throws IOException {
-        LOGGER.finest("enter() " + request.getSecurityContext().getUserPrincipal() + " - " + request.getUriInfo().getRequestUri());
+        LOGGER.trace("enter() " + request.getUriInfo().getRequestUri());
+        // fix forwarded to support Heroku forwardings.
+        String from = request.getHeaderString("X-Forwarded-For");
+        request.getHeaders().putSingle("X-Forwarded-For", from == null || from.trim().length() == 0 ? rawRequest.get().getRemoteAddr() : from.split(",|;")[0]);
         // install subject
         sessionConfigurations.forEach((system, config) -> {
             SubjectContext.setCurrentSubject(new DelegatingSubject(system, request));
         });
-        // delegate security context calls to current subject. Supports Heroku forwardings.
-        String from = request.getHeaderString("X-Forwarded-For");
-        request.getHeaders().putSingle("X-Forwarded-For", from == null || from.trim().length() == 0 ? rawRequest.get().getRemoteAddr() : from.split(",|;")[0]);
+        // delegate security context calls to current subject.
         request.setSecurityContext(new DelegatingSecurityContext(request));
     }
 
     @Override
     public void filter(ContainerRequestContext request, ContainerResponseContext responseContext) throws IOException {
-        LOGGER.finest("exit() " + request.getSecurityContext().getUserPrincipal() + " - " + request.getUriInfo().getRequestUri());
+        LOGGER.trace("exit() " + request.getUriInfo().getRequestUri());
         // uninstall all subject
         SubjectContext.clear();
     }

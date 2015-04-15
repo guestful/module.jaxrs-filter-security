@@ -18,7 +18,9 @@ package com.guestful.jaxrs.security.filter;
 import com.guestful.jaxrs.security.session.SessionConfiguration;
 import com.guestful.jaxrs.security.session.SessionConfigurations;
 import com.guestful.jaxrs.security.subject.Subject;
-import com.guestful.jaxrs.security.subject.SubjectSecurityContext;
+import com.guestful.jaxrs.security.subject.SubjectContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Priority;
 import javax.inject.Inject;
@@ -33,7 +35,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Set;
-import java.util.logging.Logger;
+import java.util.TreeSet;
 
 /**
  * date 2014-05-23
@@ -43,9 +45,9 @@ import java.util.logging.Logger;
 @Priority(Priorities.HEADER_DECORATOR)
 public class SessionCookieFilter implements ContainerResponseFilter {
 
-    private static final Logger LOGGER = Logger.getLogger(SessionCookieFilter.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(SessionCookieFilter.class);
     private static final Date EXPIRED = new Date(System.currentTimeMillis() - 604800000);
-    public static final String SESSION_COOKIE_EXPIRED = SessionCookieFilter.class.getName() + ".REMOVE_SESSION_COOKIE_REQUEST";
+    private static final String SESSION_COOKIE_EXPIRED = SessionCookieFilter.class.getName() + ".REMOVE_SESSION_COOKIE_REQUEST";
 
     private final SessionConfigurations sessionConfigurations;
 
@@ -56,17 +58,19 @@ public class SessionCookieFilter implements ContainerResponseFilter {
 
     @Override
     public void filter(ContainerRequestContext request, ContainerResponseContext response) throws IOException {
-        SubjectSecurityContext subjectSecurityContext = (SubjectSecurityContext) request.getSecurityContext();
         sessionConfigurations.forEach((system, config) -> {
+
+            Subject subject = SubjectContext.getSubject(system);
             SessionConfiguration sessionConfiguration = sessionConfigurations.getConfiguration(system);
+
             if (sessionConfiguration.getCookieName() != null) {
-                LOGGER.finest("exit() " + subjectSecurityContext.getUserPrincipal(system) + " - " + request.getUriInfo().getRequestUri());
-                Subject subject = subjectSecurityContext.getSubject(system);
 
                 if (subject.getSession() != null
                     && subject.getAuthenticationToken() != null
                     && subject.getAuthenticationToken().isSessionAllowed()) {
-                    LOGGER.finest("exit() set cookie: " + sessionConfiguration.getCookieName() + "=" + subject.getSession().getId());
+
+                    LOGGER.trace("exit() {} - {} - set cookie {}={}", subject, request.getUriInfo().getRequestUri(), sessionConfiguration.getCookieName(), subject.getSession().getId());
+
                     response.getHeaders().add(HttpHeaders.SET_COOKIE, new NewCookie(
                             sessionConfiguration.getCookieName(),
                             subject.getSession().getId(),
@@ -80,10 +84,14 @@ public class SessionCookieFilter implements ContainerResponseFilter {
                 }
 
                 Cookie cookie = request.getCookies().get(sessionConfiguration.getCookieName());
-                Collection<String> expired = (Set<String>) request.getProperty(SESSION_COOKIE_EXPIRED);
-                if (cookie != null && !response.getCookies().containsKey(cookie.getName()) && expired != null && expired.contains(system)) {
+                Collection<String> expired = getExpiredSystems(request);
+
+                if (cookie != null && !response.getCookies().containsKey(cookie.getName()) && expired.contains(system)) {
+
                     // remove old session cookie if not authenticated anymore or if a new session has been created
-                    LOGGER.finest("exit() remove old cookie: " + cookie.getName() + "=" + cookie.getValue());
+
+                    LOGGER.trace("exit() {} - {} - remove old cookie {}", subject, request.getUriInfo().getRequestUri(), cookie.getName());
+
                     response.getHeaders().addFirst(HttpHeaders.SET_COOKIE, new NewCookie(
                         cookie.getName(),
                         "delete",
@@ -99,6 +107,16 @@ public class SessionCookieFilter implements ContainerResponseFilter {
                 }
             }
         });
+    }
+
+    @SuppressWarnings("unchecked")
+    public static Collection<String> getExpiredSystems(ContainerRequestContext request) {
+        Collection<String> expired = (Set<String>) request.getProperty(SESSION_COOKIE_EXPIRED);
+        if (expired == null) {
+            expired = new TreeSet<>();
+            request.setProperty(SESSION_COOKIE_EXPIRED, expired);
+        }
+        return expired;
     }
 
 }

@@ -25,39 +25,19 @@ import java.security.Principal;
  */
 public interface SubjectSecurityContext extends SecurityContext {
 
-    default Subject getSubject() {
-        return getSubject("");
-    }
-
-    default Subject getSubject(String system) {
-        return SubjectContext.getSubject(system);
-    }
-
     @Override
     default Principal getUserPrincipal() {
-        return getUserPrincipal("");
-    }
-
-    default Principal getUserPrincipal(String system) {
-        return getSubject(system).getPrincipal();
+        return SubjectContext.getSubject().getPrincipal();
     }
 
     @Override
     default boolean isUserInRole(String role) {
-        return isUserInRole("", role);
-    }
-
-    default boolean isUserInRole(String system, String role) {
-        return getSubject(system).hasRole(role);
+        return SubjectContext.getSubject().hasRole(role);
     }
 
     @Override
     default String getAuthenticationScheme() {
-        return getAuthenticationScheme("");
-    }
-
-    default String getAuthenticationScheme(String system) {
-        AuthenticationToken token = getSubject(system).getAuthenticationToken();
+        AuthenticationToken token = SubjectContext.getSubject().getAuthenticationToken();
         return token == null ? null : token.getScheme();
     }
 

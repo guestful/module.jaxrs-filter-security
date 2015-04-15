@@ -15,6 +15,7 @@
  */
 package com.guestful.jaxrs.security.token;
 
+import com.guestful.client.facebook.FacebookAccessToken;
 import com.guestful.jaxrs.security.annotation.AuthScheme;
 
 import javax.json.JsonObject;
@@ -26,23 +27,32 @@ import javax.json.JsonObject;
  */
 public class FacebookToken extends AbstractAuthenticationToken {
 
-    private final String appId;
-    private final String userId;
-    private final String signedRequest;
     private final String system;
     private Object accessToken;
+    private String appId;
+    private String userId;
+    private String signedRequest;
     private JsonObject me;
 
-    public FacebookToken(String appId, String userId, String accessToken, String signedRequest) {
-        this("", appId, userId, accessToken, signedRequest);
+    public FacebookToken(FacebookAccessToken accessToken) {
+        this("", accessToken);
     }
 
-    public FacebookToken(String system, String appId, String userId, String accessToken, String signedRequest) {
+    public FacebookToken(String system, FacebookAccessToken accessToken) {
         this.system = system;
-        this.appId = appId;
         this.accessToken = accessToken;
-        this.userId = userId;
+    }
+
+    public void setAppId(String appId) {
+        this.appId = appId;
+    }
+
+    public void setSignedRequest(String signedRequest) {
         this.signedRequest = signedRequest;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
     public JsonObject getMe() {
@@ -61,10 +71,6 @@ public class FacebookToken extends AbstractAuthenticationToken {
         return userId;
     }
 
-    public String getAccessToken() {
-        return (String) accessToken;
-    }
-
     public String getSignedRequest() {
         return signedRequest;
     }
@@ -76,12 +82,7 @@ public class FacebookToken extends AbstractAuthenticationToken {
 
     @Override
     public Object readCredentials() {
-        if (accessToken == READ_MARKER) {
-            throw new IllegalStateException("Credentials already read");
-        }
-        Object read = accessToken;
-        accessToken = READ_MARKER;
-        return read;
+        return accessToken;
     }
 
     @Override

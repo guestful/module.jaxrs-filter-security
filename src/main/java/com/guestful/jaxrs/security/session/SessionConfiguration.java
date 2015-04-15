@@ -27,6 +27,16 @@ public class SessionConfiguration {
     private String cookiePath;
     private String cookieDomain;
     private boolean checkOrigin;
+    private boolean checkUserAgent;
+
+    public boolean isCheckUserAgent() {
+        return checkUserAgent;
+    }
+
+    public SessionConfiguration setCheckUserAgent(boolean checkUserAgent) {
+        this.checkUserAgent = checkUserAgent;
+        return this;
+    }
 
     public boolean isCheckOrigin() {
         return checkOrigin;

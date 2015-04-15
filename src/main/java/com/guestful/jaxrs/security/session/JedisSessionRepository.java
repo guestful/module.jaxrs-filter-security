@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2013 Guestful (info@guestful.com)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,8 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import com.guestful.simplepool.ObjectPool;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
@@ -30,14 +32,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * @author Mathieu Carbou (mathieu.carbou@gmail.com)
  */
 public class JedisSessionRepository implements SessionRepository {
 
-    private static final Logger LOGGER = Logger.getLogger(JedisSessionRepository.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(JedisSessionRepository.class);
     private static final String PREFIX = "api:sessions:";
     private final JedisPool jedisPool;
     private final ObjectPool<Kryo> kryoPool;
@@ -48,13 +49,13 @@ public class JedisSessionRepository implements SessionRepository {
     }
 
     @Override
-    public void saveSession(StoredSession storedSession) {
-        LOGGER.finest(storedSession.getPrincipal() + "  Saving session " + storedSession.getId());
+    public void saveSession(String system, StoredSession storedSession) {
+        LOGGER.trace(storedSession.getPrincipal() + "  Saving session " + storedSession.getId());
         Jedis jedis = null;
         boolean jedisFailure = false;
         try {
             jedis = jedisPool.getResource();
-            byte[] key = key(storedSession.getId());
+            byte[] key = key(system, storedSession.getId());
             byte[] data = encode(storedSession);
             try {
                 jedis.setex(key, storedSession.getTTL(), data);
@@ -74,13 +75,13 @@ public class JedisSessionRepository implements SessionRepository {
     }
 
     @Override
-    public void removeSession(String sessionId) {
-        LOGGER.finest("removeSession() " + sessionId);
+    public void removeSession(String system, String sessionId) {
+        LOGGER.trace("removeSession() " + sessionId);
         Jedis jedis = null;
         boolean jedisFailure = false;
         try {
             jedis = jedisPool.getResource();
-            byte[] key = key(sessionId);
+            byte[] key = key(system, sessionId);
             try {
                 jedis.del(key);
             } catch (Exception je) {
@@ -97,12 +98,12 @@ public class JedisSessionRepository implements SessionRepository {
     }
 
     @Override
-    public StoredSession findSession(String sessionId) {
+    public StoredSession findSession(String system, String sessionId) {
         Jedis jedis = null;
         boolean jedisfailure = false;
         try {
             jedis = jedisPool.getResource();
-            byte[] k = key(sessionId);
+            byte[] k = key(system, sessionId);
             byte[] bytes;
             try {
                 bytes = jedis.get(k);
@@ -133,7 +134,7 @@ public class JedisSessionRepository implements SessionRepository {
     }
 
     @Override
-    public Collection<StoredSession> findSessions() {
+    public Collection<StoredSession> findSessions(String system) {
         Jedis jedis = null;
         boolean jedisfailure = false;
         Collection<StoredSession> storedSessions = new ArrayList<>();
@@ -142,7 +143,7 @@ public class JedisSessionRepository implements SessionRepository {
             List<byte[]> vals;
             byte[][] keys;
             try {
-                Set<byte[]> keySet = jedis.keys(key("*"));
+                Set<byte[]> keySet = jedis.keys(key(system, "*"));
                 keys = keySet.toArray(new byte[keySet.size()][]);
                 vals = jedis.mget(keys);
             } catch (Exception je) {
@@ -186,8 +187,8 @@ public class JedisSessionRepository implements SessionRepository {
         }
     }
 
-    private byte[] key(String id) {
-        return (PREFIX + id).getBytes(StandardCharsets.UTF_8);
+    private byte[] key(String system, String id) {
+        return (system == null || system.equals("") ? (PREFIX + id) : (PREFIX + system + ":" + id)).getBytes(StandardCharsets.UTF_8);
     }
 
     private byte[] encode(Object value) throws TimeoutException, InterruptedException {

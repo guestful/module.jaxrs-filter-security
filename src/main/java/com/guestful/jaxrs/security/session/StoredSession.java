@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2013 Guestful (info@guestful.com)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import java.util.Map;
  */
 public class StoredSession implements Serializable, Expirable {
 
-    private static final long serialVersionUID = 3078945910695997491L;
+    private static final long serialVersionUID = 3078945930695997491L;
 
     private boolean isNew;
     private Principal principal;
@@ -36,7 +36,6 @@ public class StoredSession implements Serializable, Expirable {
     private String lastOrigin;
     private String userAgent;
     private String lastUserAgent;
-    private String system;
     private int maxAge;
     private long creationTime;
     private long lastAccessTime;
@@ -58,19 +57,10 @@ public class StoredSession implements Serializable, Expirable {
         setOrigin(session.getOrigin());
         setUserAgent(session.getUserAgent());
         setPrincipal(subject.getPrincipal());
-        setSystem(subject.getSystem());
 
         setLastAccessTime(System.currentTimeMillis());
         setLastOrigin(subject.getOrigin());
         setLastUserAgent(subject.getUserAgent());
-    }
-
-    public String getSystem() {
-        return system;
-    }
-
-    public void setSystem(String system) {
-        this.system = system;
     }
 
     @Override

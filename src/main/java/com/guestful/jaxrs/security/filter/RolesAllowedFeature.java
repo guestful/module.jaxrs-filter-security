@@ -16,7 +16,10 @@
 package com.guestful.jaxrs.security.filter;
 
 import com.guestful.jaxrs.security.annotation.Authenticated;
-import com.guestful.jaxrs.security.subject.SubjectSecurityContext;
+import com.guestful.jaxrs.security.subject.Subject;
+import com.guestful.jaxrs.security.subject.SubjectContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Priority;
 import javax.annotation.security.DenyAll;
@@ -32,7 +35,6 @@ import javax.ws.rs.core.FeatureContext;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Objects;
-import java.util.logging.Logger;
 
 /**
  * A {@link DynamicFeature} supporting the {@code javax.annotation.security.RolesAllowed},
@@ -56,7 +58,7 @@ import java.util.logging.Logger;
  */
 public class RolesAllowedFeature implements DynamicFeature {
 
-    private static final Logger LOGGER = Logger.getLogger(RolesAllowedFeature.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(RolesAllowedFeature.class);
 
     @Override
     public void configure(final ResourceInfo resourceInfo, final FeatureContext configuration) {
@@ -121,11 +123,11 @@ public class RolesAllowedFeature implements DynamicFeature {
 
         @Override
         public void filter(ContainerRequestContext request) throws IOException {
-            SubjectSecurityContext subjectSecurityContext = (SubjectSecurityContext) request.getSecurityContext();
-            LOGGER.finest("enter() " + subjectSecurityContext.getUserPrincipal(system) + " - " + request.getUriInfo().getRequestUri());
+            Subject subject = SubjectContext.getSubject(system);
+            LOGGER.trace("enter() {} - {}", subject, request.getUriInfo().getRequestUri());
             if (!denyAll) {
                 for (String role : rolesAllowed) {
-                    if (subjectSecurityContext.isUserInRole(system, role)) {
+                    if (subject.hasRole(role)) {
                         return;
                     }
                 }
