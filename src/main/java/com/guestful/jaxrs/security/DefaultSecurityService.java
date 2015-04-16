@@ -99,7 +99,7 @@ public class DefaultSecurityService implements SecurityService {
         LOGGER.trace("getConnectedSessions() {}:{}", system, principal);
         return sessionRepository.findSessions(system)
             .filter(stored -> {
-                if (!principal.equals(stored.getPrincipal())) {
+                if (!stored.getPrincipal().equals(principal.getName())) {
                     return false;
                 }
                 if (stored.isExpired()) {

@@ -34,14 +34,14 @@ import java.util.stream.Stream;
 /**
  * @author Mathieu Carbou (mathieu.carbou@gmail.com)
  */
-public class JedisSessionRepository implements SessionRepository {
+public class JedisKryoSessionRepository implements SessionRepository {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(JedisSessionRepository.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(JedisKryoSessionRepository.class);
     private static final String PREFIX = "api:sessions:";
     private final JedisPool jedisPool;
     private final ObjectPool<Kryo> kryoPool;
 
-    public JedisSessionRepository(JedisPool jedisPool, ObjectPool<Kryo> kryoPool) {
+    public JedisKryoSessionRepository(JedisPool jedisPool, ObjectPool<Kryo> kryoPool) {
         this.jedisPool = jedisPool;
         this.kryoPool = kryoPool;
     }

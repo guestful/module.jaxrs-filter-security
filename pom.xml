@@ -88,12 +88,21 @@
             <version>1.7.9</version>
         </dependency>
 
+        <!-- session repository with Kryo+Redisson -->
         <dependency>
             <groupId>org.redisson</groupId>
             <artifactId>redisson</artifactId>
             <version>1.2.1-issue-125-127</version>
             <optional>true</optional>
         </dependency>
+        <dependency>
+            <groupId>com.esotericsoftware.kryo</groupId>
+            <artifactId>kryo</artifactId>
+            <version>2.24.0</version>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- session repository with Jedis: Kryo+Pool or Json -->
         <dependency>
             <groupId>redis.clients</groupId>
             <artifactId>jedis</artifactId>
@@ -107,11 +116,16 @@
             <optional>true</optional>
         </dependency>
         <dependency>
-            <groupId>com.esotericsoftware.kryo</groupId>
-            <artifactId>kryo</artifactId>
-            <version>2.24.0</version>
-            <optional>true</optional>
+            <groupId>javax.json</groupId>
+            <artifactId>javax.json-api</artifactId>
+            <version>1.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.guestful.module</groupId>
+            <artifactId>guestful.module.json-serializer</artifactId>
+            <version>1.4</version>
+        </dependency>
+
         <dependency>
             <groupId>com.guestful.module</groupId>
             <artifactId>guestful.module.facebook-client</artifactId>
@@ -122,9 +136,30 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <scope>test</scope>
             <version>4.11</version>
+            <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy</artifactId>
+            <version>2.4.1</version>
+            <classifier>indy</classifier>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy-json</artifactId>
+            <version>${groovy.version}</version>
+            <classifier>indy</classifier>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.codehaus.groovy</groupId>
+                    <artifactId>groovy</artifactId>
+                </exclusion>
+            </exclusions>
+            <scope>test</scope>
+        </dependency>
+        
     </dependencies>
 
 </project>
