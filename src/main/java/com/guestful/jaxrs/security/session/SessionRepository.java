@@ -15,7 +15,7 @@
  */
 package com.guestful.jaxrs.security.session;
 
-import java.util.Collection;
+import java.util.stream.Stream;
 
 /**
  * @author Mathieu Carbou (mathieu.carbou@gmail.com)
@@ -27,5 +27,5 @@ public interface SessionRepository {
 
     StoredSession findSession(String system, String sessionId);
 
-    Collection<StoredSession> findSessions(String system);
+    Stream<StoredSession> findSessions(String system);
 }

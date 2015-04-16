@@ -69,7 +69,7 @@ public class SessionCookieFilter implements ContainerResponseFilter {
                     && subject.getAuthenticationToken() != null
                     && subject.getAuthenticationToken().isSessionAllowed()) {
 
-                    LOGGER.trace("exit() {} - {} - set cookie {}={}", subject, request.getUriInfo().getRequestUri(), sessionConfiguration.getCookieName(), subject.getSession().getId());
+                    LOGGER.trace("exit() {} - {} - set cookie {}={}", subject, request.getUriInfo().getRequestUri(), sessionConfiguration.getCookieName(), subject.getSession());
 
                     response.getHeaders().add(HttpHeaders.SET_COOKIE, new NewCookie(
                             sessionConfiguration.getCookieName(),

@@ -139,14 +139,7 @@ public class DefaultSession implements Session {
 
     @Override
     public String toString() {
-        return "{" +
-            "id='" + id + '\'' +
-            ", origin='" + origin + '\'' +
-            ", creationTime=" + creationTime +
-            ", maxAge=" + maxAge +
-            ", isNew=" + isNew +
-            ", lastAccessTime=" + lastAccessTime +
-            '}';
+        return getId();
     }
 
 }

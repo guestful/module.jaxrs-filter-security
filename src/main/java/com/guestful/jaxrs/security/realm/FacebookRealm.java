@@ -71,11 +71,12 @@ public class FacebookRealm extends AbstractRealm {
         // get local account
         Account account = getAccountRepository().findAccount(token);
         if (account == null) {
-            throw new AccountNotFoundException(String.valueOf(token.getToken()));
+            throw new AccountNotFoundException(token.toString());
         }
         if (account.isLocked()) {
             throw new AccountLockedException(account.getPrincipal().getName());
         }
+        LOGGER.trace("authenticate() {} - found account {}", token, account);
         return new AuthenticatedSubject(
             account,
             null,

@@ -21,11 +21,10 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Singleton;
-import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Mathieu Carbou (mathieu.carbou@gmail.com)
@@ -48,9 +47,8 @@ public class MemorySessionRepository implements SessionRepository {
                     try {
                         while (!Thread.currentThread().isInterrupted()) {
                             Thread.sleep(60000);
-                            LOGGER.trace("scavenger() searching for expired sessions (" + sessions.size() + " sessions in cache)");
                             sessions.entrySet().stream().filter(e -> e.getValue().isExpired()).forEach(entry -> {
-                                LOGGER.trace("scavenger() removing expired session " + entry.getKey());
+                                LOGGER.trace("scavenger() {}", entry.getKey());
                                 sessions.remove(entry.getKey(), entry.getValue());
                             });
                         }
@@ -61,7 +59,7 @@ public class MemorySessionRepository implements SessionRepository {
                     }
                 }
             };
-            LOGGER.trace("init() Starting scavenger thread " + scavenger.getName());
+            LOGGER.trace("init() scavenger thread {}", scavenger.getName());
             scavenger.start();
         }
     }
@@ -77,27 +75,29 @@ public class MemorySessionRepository implements SessionRepository {
     @Override
     public void saveSession(String system, StoredSession storedSession) {
         String key = key(system, storedSession.getId());
-        LOGGER.trace("saveSession() " + key + " principal=" + storedSession.getPrincipal());
-        sessions.put(storedSession.getId(), storedSession);
+        LOGGER.trace("saveSession() {}={}", key, storedSession);
+        sessions.put(key, storedSession);
     }
 
     @Override
     public void removeSession(String system, String sessionId) {
         String key = key(system, sessionId);
-        LOGGER.trace("removeSession() " + key);
+        LOGGER.trace("removeSession() {}", key);
         sessions.remove(key);
     }
 
     @Override
     public StoredSession findSession(String system, String sessionId) {
         String key = key(system, sessionId);
+        LOGGER.trace("findSession() {}", key);
         return sessions.get(key);
     }
 
     @Override
-    public Collection<StoredSession> findSessions(String system) {
+    public Stream<StoredSession> findSessions(String system) {
         String key = key(system, "");
-        return sessions.entrySet().stream().filter(e -> e.getKey().startsWith(key)).map(Map.Entry::getValue).collect(Collectors.toList());
+        LOGGER.trace("findSessions() {}", key);
+        return sessions.entrySet().stream().filter(e -> e.getKey().startsWith(key)).map(Map.Entry::getValue);
     }
 
     private String key(String system, String id) {

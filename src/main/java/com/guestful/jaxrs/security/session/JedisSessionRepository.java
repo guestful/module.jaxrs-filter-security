@@ -26,12 +26,10 @@ import redis.clients.jedis.JedisPool;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
-import java.util.logging.Level;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 /**
  * @author Mathieu Carbou (mathieu.carbou@gmail.com)
@@ -50,160 +48,116 @@ public class JedisSessionRepository implements SessionRepository {
 
     @Override
     public void saveSession(String system, StoredSession storedSession) {
-        LOGGER.trace(storedSession.getPrincipal() + "  Saving session " + storedSession.getId());
-        Jedis jedis = null;
-        boolean jedisFailure = false;
-        try {
-            jedis = jedisPool.getResource();
-            byte[] key = key(system, storedSession.getId());
-            byte[] data = encode(storedSession);
-            try {
-                jedis.setex(key, storedSession.getTTL(), data);
-            } catch (Exception je) {
-                jedisFailure = true;
-                throw je;
-            }
-        } catch (InterruptedException | TimeoutException e) {
-            throw new SessionRepositoryException("Unable to save session " + storedSession.getId() + ": " + e.getMessage(), e);
-        } finally {
-            if (jedisFailure) {
-                jedisPool.returnBrokenResource(jedis);
-            } else {
-                jedisPool.returnResource(jedis);
-            }
-        }
+        String key = key(system, storedSession.getId());
+        LOGGER.trace("saveSession() {}={}", key, storedSession);
+        byte[] data = encode(storedSession);
+        redis(jedis -> {
+            jedis.setex(key.getBytes(StandardCharsets.UTF_8), storedSession.getTTL(), data);
+            return null;
+        });
     }
 
     @Override
     public void removeSession(String system, String sessionId) {
-        LOGGER.trace("removeSession() " + sessionId);
-        Jedis jedis = null;
-        boolean jedisFailure = false;
-        try {
-            jedis = jedisPool.getResource();
-            byte[] key = key(system, sessionId);
-            try {
-                jedis.del(key);
-            } catch (Exception je) {
-                jedisFailure = true;
-                throw je;
-            }
-        } finally {
-            if (jedisFailure) {
-                jedisPool.returnBrokenResource(jedis);
-            } else {
-                jedisPool.returnResource(jedis);
-            }
-        }
+        String key = key(system, sessionId);
+        LOGGER.trace("removeSession() {}", key);
+        redis(jedis -> {
+            jedis.del(key.getBytes(StandardCharsets.UTF_8));
+            return null;
+        });
     }
 
     @Override
     public StoredSession findSession(String system, String sessionId) {
-        Jedis jedis = null;
-        boolean jedisfailure = false;
+        String key = key(system, sessionId);
+        LOGGER.trace("findSession() {}", key);
+        byte[] b = redis(jedis -> jedis.get(key.getBytes(StandardCharsets.UTF_8)));
         try {
-            jedis = jedisPool.getResource();
-            byte[] k = key(system, sessionId);
-            byte[] bytes;
-            try {
-                bytes = jedis.get(k);
-            } catch (Exception je) {
-                jedisfailure = true;
-                throw je;
-            }
-            try {
-                return (StoredSession) decode(bytes);
-            } catch (InterruptedException | TimeoutException e) {
-                throw new SessionRepositoryException("Unable to save session " + sessionId + ": " + e.getMessage(), e);
-            } catch (Exception e) {
-                LOGGER.log(Level.WARNING, "Removing malformed session " + sessionId + ": " + e.getMessage(), e);
-                try {
-                    jedis.del(k);
-                } catch (Exception je) {
-                    jedisfailure = true;
-                }
-                return null;
-            }
-        } finally {
-            if (jedisfailure) {
-                jedisPool.returnBrokenResource(jedis);
-            } else {
-                jedisPool.returnResource(jedis);
-            }
+            return decode(b);
+        } catch (DecodingException e) {
+            removeSession(system, sessionId);
+            return null;
         }
     }
 
     @Override
-    public Collection<StoredSession> findSessions(String system) {
-        Jedis jedis = null;
-        boolean jedisfailure = false;
-        Collection<StoredSession> storedSessions = new ArrayList<>();
-        try {
-            jedis = jedisPool.getResource();
-            List<byte[]> vals;
-            byte[][] keys;
+    public Stream<StoredSession> findSessions(String system) {
+        String key = key(system, "*");
+        LOGGER.trace("findSessions() {}", key);
+        return redis(jedis -> {
+            Set<byte[]> keySet = jedis.keys(key.getBytes(StandardCharsets.UTF_8));
+            byte[][] keys = keySet.toArray(new byte[keySet.size()][]);
+            return jedis.mget(keys);
+        }).parallelStream().flatMap(bytes -> {
             try {
-                Set<byte[]> keySet = jedis.keys(key(system, "*"));
-                keys = keySet.toArray(new byte[keySet.size()][]);
-                vals = jedis.mget(keys);
-            } catch (Exception je) {
-                jedisfailure = true;
-                throw je;
+                return Stream.of(decode(bytes));
+            } catch (DecodingException e) {
+                return Stream.empty();
             }
-            for (int i = 0; i < keys.length; i++) {
-                byte[] key = keys[i];
-                byte[] bytes = vals.get(i);
-                try {
-                    storedSessions.add((StoredSession) decode(bytes));
-                } catch (Exception e) {
-                    LOGGER.log(Level.WARNING, "Removing malformed session " + new String(key) + ": " + e.getMessage(), e);
-                    try {
-                        jedis.del(key);
-                    } catch (Exception je) {
-                        jedisfailure = true;
-                    }
-                }
-            }
-        } finally {
-            if (jedisfailure) {
-                jedisPool.returnBrokenResource(jedis);
-            } else {
-                jedisPool.returnResource(jedis);
-            }
-        }
-        return storedSessions;
+        });
     }
 
-    private Object decode(byte[] bytes) throws TimeoutException, InterruptedException {
-        if (bytes == null) return null;
-        Kryo kryo = null;
+    private <T> T redis(Function<Jedis, T> consumer) {
+        Jedis jedis = jedisPool.getResource();
         try {
-            kryo = kryoPool.borrow();
-            return kryo.readClassAndObject(new Input(bytes));
-        } finally {
-            if (kryo != null) {
-                kryoPool.yield(kryo);
-            }
+            T o = consumer.apply(jedis);
+            jedisPool.returnResource(jedis);
+            return o;
+        } catch (Exception e) {
+            jedisPool.returnBrokenResource(jedis);
+            throw e;
         }
     }
 
-    private byte[] key(String system, String id) {
-        return (system == null || system.equals("") ? (PREFIX + id) : (PREFIX + system + ":" + id)).getBytes(StandardCharsets.UTF_8);
+    private String key(String system, String id) {
+        return system == null || system.equals("") ? (PREFIX + id) : (PREFIX + system + ":" + id);
     }
 
-    private byte[] encode(Object value) throws TimeoutException, InterruptedException {
+    private byte[] encode(StoredSession storedSession) throws SessionRepositoryException {
         Kryo kryo = null;
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             Output output = new Output(baos);
             kryo = kryoPool.borrow();
-            kryo.writeClassAndObject(output, value);
+            kryo.writeClassAndObject(output, storedSession);
             output.close();
             return baos.toByteArray();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new SessionRepositoryException("Unable to encode session " + storedSession + ": " + e.getMessage(), e);
+        } catch (TimeoutException e) {
+            throw new SessionRepositoryException("Unable to encode session " + storedSession + ": " + e.getMessage(), e);
         } finally {
             if (kryo != null) {
                 kryoPool.yield(kryo);
             }
+        }
+    }
+
+    private StoredSession decode(byte[] bytes) throws SessionRepositoryException, DecodingException {
+        if (bytes == null) return null;
+        Kryo kryo = null;
+        try {
+            kryo = kryoPool.borrow();
+            return (StoredSession) kryo.readClassAndObject(new Input(bytes));
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new SessionRepositoryException("Unable to decode session: " + e.getMessage(), e);
+        } catch (TimeoutException e) {
+            throw new SessionRepositoryException("Unable to decode session: " + e.getMessage(), e);
+        } catch (Exception e) {
+            // decoding issue
+            throw new DecodingException(e);
+        } finally {
+            if (kryo != null) {
+                kryoPool.yield(kryo);
+            }
+        }
+    }
+
+    private static final class DecodingException extends RuntimeException {
+        public DecodingException(Throwable cause) {
+            super(cause);
         }
     }
 

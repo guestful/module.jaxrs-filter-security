@@ -54,7 +54,7 @@ public class SubjectContextFilter implements ContainerRequestFilter, ContainerRe
 
     @Override
     public void filter(ContainerRequestContext request) throws IOException {
-        LOGGER.trace("enter() " + request.getUriInfo().getRequestUri());
+        LOGGER.trace("enter() {}", request.getUriInfo().getRequestUri());
         // fix forwarded to support Heroku forwardings.
         String from = request.getHeaderString("X-Forwarded-For");
         request.getHeaders().putSingle("X-Forwarded-For", from == null || from.trim().length() == 0 ? rawRequest.get().getRemoteAddr() : from.split(",|;")[0]);
@@ -68,7 +68,7 @@ public class SubjectContextFilter implements ContainerRequestFilter, ContainerRe
 
     @Override
     public void filter(ContainerRequestContext request, ContainerResponseContext responseContext) throws IOException {
-        LOGGER.trace("exit() " + request.getUriInfo().getRequestUri());
+        LOGGER.trace("exit() {}", request.getUriInfo().getRequestUri());
         // uninstall all subject
         SubjectContext.clear();
     }

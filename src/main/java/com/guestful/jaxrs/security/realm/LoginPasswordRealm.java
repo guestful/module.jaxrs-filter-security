@@ -40,18 +40,18 @@ public class LoginPasswordRealm extends AbstractRealm {
 
     @Override
     public Subject authenticate(AuthenticationToken authToken, LoginContext loginContext) throws LoginException {
-        LOGGER.trace("authenticate() Find account " + authToken);
+        LOGGER.trace("authenticate() {}", authToken);
         Account account = getAccountRepository().findAccount(authToken);
         if (account == null) {
-            throw new AccountNotFoundException(String.valueOf(authToken.getToken()));
+            throw new AccountNotFoundException(authToken.toString());
         }
         if (account.isLocked()) {
             throw new AccountLockedException(account.getPrincipal().getName());
         }
-        LOGGER.trace("authenticate() Check credentials against account " + account.getPrincipal());
         if (!getCredentialsMatcher().matches(account, authToken)) {
             throw new BadCredentialException(String.valueOf(authToken.getToken()));
         }
+        LOGGER.trace("authenticate() {} - found account {}", authToken, account);
         return new AuthenticatedSubject(
             account,
             null,

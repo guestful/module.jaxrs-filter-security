@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2013 Guestful (info@guestful.com)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,14 +40,15 @@ public class PassthroughRealm extends AbstractRealm {
 
     @Override
     public Subject authenticate(AuthenticationToken authToken, LoginContext loginContext) throws LoginException {
-        LOGGER.trace("authenticate() Find account for token " + authToken);
+        LOGGER.trace("authenticate() {}", authToken);
         Account account = getAccountRepository().findAccount(authToken);
         if (account == null) {
-            throw new AccountNotFoundException(String.valueOf(authToken.getToken()));
+            throw new AccountNotFoundException(authToken.toString());
         }
         if (account.isLocked()) {
             throw new AccountLockedException(account.getPrincipal().getName());
         }
+        LOGGER.trace("authenticate() {} - found account {}", authToken, account);
         return new AuthenticatedSubject(
             account,
             null,

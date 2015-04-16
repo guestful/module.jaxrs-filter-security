@@ -19,6 +19,7 @@ import com.guestful.client.facebook.FacebookAccessToken;
 import com.guestful.jaxrs.security.annotation.AuthScheme;
 
 import javax.json.JsonObject;
+import java.util.Objects;
 
 /**
  * date 2014-05-23
@@ -27,20 +28,27 @@ import javax.json.JsonObject;
  */
 public class FacebookToken extends AbstractAuthenticationToken {
 
+    private final String userId;
     private final String system;
     private Object accessToken;
     private String appId;
-    private String userId;
     private String signedRequest;
     private JsonObject me;
 
-    public FacebookToken(FacebookAccessToken accessToken) {
-        this("", accessToken);
+    public FacebookToken(String userId, FacebookAccessToken accessToken) {
+        this("", userId, accessToken);
     }
 
-    public FacebookToken(String system, FacebookAccessToken accessToken) {
-        this.system = system;
-        this.accessToken = accessToken;
+    public FacebookToken(String system, String userId, FacebookAccessToken accessToken) {
+        this(system, userId, accessToken, null, null);
+    }
+
+    public FacebookToken(String system, String userId, FacebookAccessToken accessToken, String appId, String signedRequest) {
+        this.system = Objects.requireNonNull(system);
+        this.userId = Objects.requireNonNull(userId);
+        this.accessToken = Objects.requireNonNull(accessToken);
+        this.appId = appId;
+        this.signedRequest = signedRequest;
     }
 
     public void setAppId(String appId) {
@@ -49,10 +57,6 @@ public class FacebookToken extends AbstractAuthenticationToken {
 
     public void setSignedRequest(String signedRequest) {
         this.signedRequest = signedRequest;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
     }
 
     public JsonObject getMe() {
@@ -77,7 +81,7 @@ public class FacebookToken extends AbstractAuthenticationToken {
 
     @Override
     public Object getToken() {
-        return accessToken;
+        return userId;
     }
 
     @Override

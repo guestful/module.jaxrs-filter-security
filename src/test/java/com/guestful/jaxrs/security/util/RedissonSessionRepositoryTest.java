@@ -32,8 +32,8 @@ import redis.clients.jedis.JedisPool;
 
 import java.util.Collection;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 
@@ -79,15 +79,14 @@ public final class RedissonSessionRepositoryTest {
 
         SessionRepository sessionRepository = new JedisSessionRepository(jedisPool, new BoundedObjectPool<>(5, 60, 30000, Kryo::new));
         //SessionRepository sessionRepository = new RedissonSessionRepository(redisson);
-        sessionRepository.saveSession(storedSession1);
-        sessionRepository.saveSession(storedSession2);
+        sessionRepository.saveSession("", storedSession1);
+        sessionRepository.saveSession("", storedSession2);
 
-        assertEquals(storedSession1.getPrincipal(), sessionRepository.findSession(storedSession1.getId()).getPrincipal());
+        assertEquals(storedSession1.getPrincipal(), sessionRepository.findSession("", storedSession1.getId()).getPrincipal());
 
-        Collection<String> sessions = sessionRepository.findSessions()
-            .stream()
+        Collection<String> sessions = sessionRepository.findSessions("")
             .map(st -> st.getPrincipal().getName())
-            .collect(Collectors.toList());
+            .collect(ConcurrentLinkedQueue::new, ConcurrentLinkedQueue::add, ConcurrentLinkedQueue::addAll);
         assertEquals(2, sessions.size());
         assertTrue(sessions.contains(uuid1));
         assertTrue(sessions.contains(uuid2));

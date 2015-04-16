@@ -21,9 +21,9 @@ import com.guestful.jaxrs.security.token.AuthenticationToken;
 
 import javax.security.auth.login.LoginException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 /**
  * date 2014-05-23
@@ -54,11 +54,11 @@ public class SubjectContext {
         SUBJECTS.get().remove(subject.getSystem(), subject);
     }
 
-    static Collection<ConnectedSession> getConnectedSessions(Subject subject) {
+    static Stream<ConnectedSession> getConnectedSessions(Subject subject) {
         if (subject.getPrincipal() != null && subject.getSession(false) != null && subject.getAuthenticationToken() != null) {
             return getSecurityService().getConnectedSessions(subject.getSystem(), subject.getPrincipal());
         }
-        return Collections.emptyList();
+        return Stream.empty();
     }
 
     // PUBLIC

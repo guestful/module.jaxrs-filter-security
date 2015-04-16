@@ -20,10 +20,8 @@ import org.redisson.core.RBucket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Mathieu Carbou (mathieu.carbou@gmail.com)
@@ -41,34 +39,35 @@ public class RedissonSessionRepository implements SessionRepository {
     @Override
     public void saveSession(String system, StoredSession storedSession) {
         String key = key(system, storedSession.getId());
-        LOGGER.trace(storedSession.getPrincipal() + "  Saving session " + storedSession.getId());
+        LOGGER.trace("saveSession() {}={}", key, storedSession);
         redisson.getBucket(key).set(storedSession, storedSession.getTTL(), TimeUnit.SECONDS);
     }
 
     @Override
     public void removeSession(String system, String sessionId) {
         String key = key(system, sessionId);
-        LOGGER.trace("removeSession() " + sessionId);
+        LOGGER.trace("removeSession() {}", key);
         redisson.getBucket(key).delete();
     }
 
     @Override
     public StoredSession findSession(String system, String sessionId) {
         String key = key(system, sessionId);
+        LOGGER.trace("findSession() {}", key);
         RBucket<StoredSession> bucket = redisson.<StoredSession>getBucket(key);
         try {
             return bucket.get();
         } catch (RuntimeException e) {
-            LOGGER.log(Level.WARNING, "Removing malformed session " + sessionId + ": " + e.getMessage(), e);
             bucket.delete();
             return null;
         }
     }
 
     @Override
-    public Collection<StoredSession> findSessions(String system) {
+    public Stream<StoredSession> findSessions(String system) {
         String key = key(system, "*");
-        return redisson.<StoredSession>getBuckets(key).stream().map(RBucket::get).collect(Collectors.toList());
+        LOGGER.trace("findSessions() {}", key);
+        return redisson.<StoredSession>getBuckets(key).stream().map(RBucket::get);
     }
 
     private String key(String system, String id) {

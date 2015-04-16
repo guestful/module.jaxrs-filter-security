@@ -22,6 +22,7 @@ import com.guestful.jaxrs.security.token.AuthenticationToken;
 import javax.ws.rs.container.ContainerRequestContext;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.stream.Stream;
 
 /**
  * date 2014-05-23
@@ -74,7 +75,7 @@ public interface Subject extends LoginContext {
         SubjectContext.accessed(this);
     }
 
-    default Collection<ConnectedSession> getConnectedSessions() {
+    default Stream<ConnectedSession> getConnectedSessions() {
         return SubjectContext.getConnectedSessions(this);
     }
 

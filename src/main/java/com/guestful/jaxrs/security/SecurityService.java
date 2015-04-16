@@ -21,7 +21,7 @@ import com.guestful.jaxrs.security.token.AuthenticationToken;
 
 import javax.security.auth.login.LoginException;
 import java.security.Principal;
-import java.util.Collection;
+import java.util.stream.Stream;
 
 /**
  * date 2014-05-23
@@ -35,15 +35,15 @@ public interface SecurityService {
 
     void logout(Subject subject);
 
-    Collection<ConnectedSession> getConnectedSessions(String system);
+    Stream<ConnectedSession> getConnectedSessions(String system);
 
-    Collection<ConnectedSession> getConnectedSessions(String system, Principal principal);
+    Stream<ConnectedSession> getConnectedSessions(String system, Principal principal);
 
-    default Collection<ConnectedSession> getConnectedSessions() {
+    default Stream<ConnectedSession> getConnectedSessions() {
         return getConnectedSessions("");
     }
 
-    default Collection<ConnectedSession> getConnectedSessions(Principal principal) {
+    default Stream<ConnectedSession> getConnectedSessions(Principal principal) {
         return getConnectedSessions("", principal);
     }
 

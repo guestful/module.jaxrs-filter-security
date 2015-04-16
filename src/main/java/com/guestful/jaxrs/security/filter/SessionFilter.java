@@ -51,7 +51,7 @@ public class SessionFilter implements ContainerResponseFilter {
         sessionConfigurations.forEach((system, config) -> {
             Subject subject = SubjectContext.getSubject(system);
             if (subject.getPrincipal() != null && subject.getSession(false) != null) {
-                LOGGER.trace("exit() {} - {} - record access on session {}", subject, request.getUriInfo().getRequestUri(), subject.getSession().getId());
+                LOGGER.trace("exit() {} - {} - record access on session {}", subject, request.getUriInfo().getRequestUri(), subject.getSession());
                 subject.accessed();
             }
         });

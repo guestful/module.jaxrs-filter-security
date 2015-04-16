@@ -15,8 +15,6 @@
  */
 package com.guestful.jaxrs.security.subject;
 
-import com.guestful.jaxrs.security.token.AuthenticationToken;
-
 import javax.ws.rs.core.SecurityContext;
 import java.security.Principal;
 
@@ -27,18 +25,20 @@ public interface SubjectSecurityContext extends SecurityContext {
 
     @Override
     default Principal getUserPrincipal() {
-        return SubjectContext.getSubject().getPrincipal();
+        Subject subject = SubjectContext.getSubject(false);
+        return subject == null ? null : subject.getPrincipal();
     }
 
     @Override
     default boolean isUserInRole(String role) {
-        return SubjectContext.getSubject().hasRole(role);
+        Subject subject = SubjectContext.getSubject(false);
+        return subject != null && subject.hasRole(role);
     }
 
     @Override
     default String getAuthenticationScheme() {
-        AuthenticationToken token = SubjectContext.getSubject().getAuthenticationToken();
-        return token == null ? null : token.getScheme();
+        Subject subject = SubjectContext.getSubject(false);
+        return subject == null || subject.getAuthenticationToken() == null ? null : subject.getAuthenticationToken().getScheme();
     }
 
     @Override
