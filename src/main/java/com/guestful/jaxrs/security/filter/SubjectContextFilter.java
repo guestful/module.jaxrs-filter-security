@@ -59,8 +59,9 @@ public class SubjectContextFilter implements ContainerRequestFilter, ContainerRe
         String from = request.getHeaderString("X-Forwarded-For");
         request.getHeaders().putSingle("X-Forwarded-For", from == null || from.trim().length() == 0 ? rawRequest.get().getRemoteAddr() : from.split(",|;")[0]);
         // install subject
+        SubjectContext.addCurrentSubject(new DelegatingSubject("", request));
         sessionConfigurations.forEach((system, config) -> {
-            SubjectContext.setCurrentSubject(new DelegatingSubject(system, request));
+            SubjectContext.addCurrentSubject(new DelegatingSubject(system, request));
         });
         // delegate security context calls to current subject.
         request.setSecurityContext(new DelegatingSecurityContext(request));

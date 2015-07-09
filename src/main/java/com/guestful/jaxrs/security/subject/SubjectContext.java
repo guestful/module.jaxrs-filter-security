@@ -74,10 +74,10 @@ public class SubjectContext {
         if (token == null) throw new NullPointerException();
         Subject current = getSubject(token.getSystem(), false);
         if (current == null) {
-            throw new IllegalStateException("No login context found");
+            throw new LoginException("No login context found for token: " + token);
         }
         Subject subject = getSecurityService().login(token, current);
-        setCurrentSubject(subject);
+        addCurrentSubject(subject);
         return subject;
     }
 
@@ -106,7 +106,7 @@ public class SubjectContext {
         return subject;
     }
 
-    public static void setCurrentSubject(Subject subject) {
+    public static void addCurrentSubject(Subject subject) {
         if (subject == null) throw new NullPointerException();
         if (subject instanceof AnonymousSubject) throw new IllegalArgumentException();
         SUBJECTS.get().put(subject.getSystem(), subject);
