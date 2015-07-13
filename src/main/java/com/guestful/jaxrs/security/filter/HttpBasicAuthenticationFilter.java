@@ -58,7 +58,7 @@ public class HttpBasicAuthenticationFilter implements ContainerRequestFilter {
             LOGGER.trace("enter() {} - {}", subject, request.getUriInfo().getRequestUri());
             AuthScheme authScheme = AuthScheme.fromHeader(authzHeader.toUpperCase(Locale.ENGLISH));
             if (authScheme != AuthScheme.BASIC && authScheme != AuthScheme.BASICAUTH) {
-                throw new AuthenticationException("Unsupported scheme", request);
+                throw new AuthenticationException("Unsupported scheme: " + authzHeader, request);
             }
             String[] parts = authzHeader.split(" ");
             if (parts.length < 2) {
