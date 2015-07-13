@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2013 Guestful (info@guestful.com)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,22 +58,23 @@ public class HttpBasicAuthenticationFilter implements ContainerRequestFilter {
             LOGGER.trace("enter() {} - {}", subject, request.getUriInfo().getRequestUri());
             AuthScheme authScheme = AuthScheme.fromHeader(authzHeader.toUpperCase(Locale.ENGLISH));
             if (authScheme != AuthScheme.BASIC && authScheme != AuthScheme.BASICAUTH) {
-                throw new AuthenticationException("Unsupported scheme: " + authzHeader, request);
-            }
-            String[] parts = authzHeader.split(" ");
-            if (parts.length < 2) {
-                throw new AuthenticationException("Malformed Basic HTTP Authorization", request);
-            }
-            String userInfo = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
-            parts = userInfo.split(":", 2);
-            if (parts.length < 2) {
-                throw new AuthenticationException("Malformed Basic HTTP Authorization", request);
-            }
-            AuthenticationToken token = new HttpBasicToken(system, authScheme, parts[0], parts[1]);
-            try {
-                SubjectContext.login(token);
-            } catch (LoginException e) {
-                throw new AuthenticationException(e.getMessage(), e, request);
+                LOGGER.trace("Unsupported scheme: " + authzHeader);
+            } else {
+                String[] parts = authzHeader.split(" ");
+                if (parts.length < 2) {
+                    throw new AuthenticationException("Malformed Basic HTTP Authorization", request);
+                }
+                String userInfo = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
+                parts = userInfo.split(":", 2);
+                if (parts.length < 2) {
+                    throw new AuthenticationException("Malformed Basic HTTP Authorization", request);
+                }
+                AuthenticationToken token = new HttpBasicToken(system, authScheme, parts[0], parts[1]);
+                try {
+                    SubjectContext.login(token);
+                } catch (LoginException e) {
+                    throw new AuthenticationException(e.getMessage(), e, request);
+                }
             }
         }
     }
