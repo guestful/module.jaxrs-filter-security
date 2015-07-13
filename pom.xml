@@ -28,7 +28,7 @@
 
     <groupId>com.guestful.module</groupId>
     <artifactId>guestful.module.jaxrs-filter-security</artifactId>
-    <version>1.15-SNAPSHOT</version>
+    <version>1.15</version>
     <packaging>jar</packaging>
     <name>Guestful :: Module :: JAX-RS Security Filters (JSR-250, Http Basic, Cookie, Remember-Me, etc)</name>
     <inceptionYear>2013</inceptionYear>
@@ -42,7 +42,7 @@
         <connection>scm:git:git@github.com:guestful/${github.name}.git</connection>
         <developerConnection>scm:git:git@github.com:guestful/${github.name}.git</developerConnection>
         <url>https://github.com/guestful/${github.name}</url>
-        <tag>HEAD</tag>
+        <tag>guestful.module.jaxrs-filter-security-1.15</tag>
     </scm>
 
     <repositories>
